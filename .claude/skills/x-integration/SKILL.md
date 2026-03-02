@@ -49,8 +49,8 @@ npx dotenv -e .env -- npx tsx .claude/skills/x-integration/scripts/setup.ts
 
 # 3. Rebuild host and restart service
 npm run build
-launchctl kickstart -k gui/$(id -u)/com.nanoclaw  # macOS
-# Linux: systemctl --user restart nanoclaw
+launchctl kickstart -k gui/$(id -u)/com.ghostclaw  # macOS
+# Linux: systemctl --user restart ghostclaw
 # Verify: launchctl list | grep nanoclaw (macOS) or systemctl --user status nanoclaw (Linux)
 ```
 
@@ -272,8 +272,8 @@ cat data/x-auth.json  # Should show {"authenticated": true, ...}
 
 ```bash
 npm run build
-launchctl kickstart -k gui/$(id -u)/com.nanoclaw  # macOS
-# Linux: systemctl --user restart nanoclaw
+launchctl kickstart -k gui/$(id -u)/com.ghostclaw  # macOS
+# Linux: systemctl --user restart ghostclaw
 ```
 
 **Verify success:**
@@ -345,8 +345,8 @@ echo '{"content":"Test"}' | npx tsx .claude/skills/x-integration/scripts/post.ts
 
 ```bash
 npx dotenv -e .env -- npx tsx .claude/skills/x-integration/scripts/setup.ts
-launchctl kickstart -k gui/$(id -u)/com.nanoclaw  # macOS
-# Linux: systemctl --user restart nanoclaw
+launchctl kickstart -k gui/$(id -u)/com.ghostclaw  # macOS
+# Linux: systemctl --user restart ghostclaw
 ```
 
 ### Browser Lock Files

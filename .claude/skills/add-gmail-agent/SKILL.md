@@ -37,8 +37,8 @@ cd container/agent-runner && npx tsc
 ### 3. Restart
 
 ```bash
-launchctl kickstart -k gui/$(id -u)/com.nanoclaw  # macOS
-# systemctl --user restart nanoclaw               # Linux
+launchctl kickstart -k gui/$(id -u)/com.ghostclaw  # macOS
+# systemctl --user restart ghostclaw               # Linux
 ```
 
 ### 4. Test

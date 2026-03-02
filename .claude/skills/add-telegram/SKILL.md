@@ -122,8 +122,8 @@ Tell the user:
 
 ```bash
 npm run build
-launchctl kickstart -k gui/$(id -u)/com.nanoclaw  # macOS
-# Linux: systemctl --user restart nanoclaw
+launchctl kickstart -k gui/$(id -u)/com.ghostclaw  # macOS
+# Linux: systemctl --user restart ghostclaw
 ```
 
 ## Phase 4: Registration
@@ -211,14 +211,14 @@ If `/chatid` doesn't work:
 If running `npm run dev` while the service is active:
 ```bash
 # macOS:
-launchctl unload ~/Library/LaunchAgents/com.nanoclaw.plist
+launchctl unload ~/Library/LaunchAgents/com.ghostclaw.plist
 npm run dev
 # When done testing:
-launchctl load ~/Library/LaunchAgents/com.nanoclaw.plist
+launchctl load ~/Library/LaunchAgents/com.ghostclaw.plist
 # Linux:
-# systemctl --user stop nanoclaw
+# systemctl --user stop ghostclaw
 # npm run dev
-# systemctl --user start nanoclaw
+# systemctl --user start ghostclaw
 ```
 
 ## Agent Swarms (Teams)
@@ -240,4 +240,4 @@ To remove Telegram integration:
 5. Remove Telegram config (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_ONLY`) from `src/config.ts`
 6. Remove Telegram registrations from SQLite: `sqlite3 store/messages.db "DELETE FROM registered_groups WHERE jid LIKE 'tg:%'"`
 7. Uninstall: `npm uninstall grammy`
-8. Rebuild: `npm run build && launchctl kickstart -k gui/$(id -u)/com.nanoclaw` (macOS) or `npm run build && systemctl --user restart nanoclaw` (Linux)
+8. Rebuild: `npm run build && launchctl kickstart -k gui/$(id -u)/com.ghostclaw` (macOS) or `npm run build && systemctl --user restart ghostclaw` (Linux)

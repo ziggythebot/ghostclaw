@@ -166,8 +166,8 @@ Then compile and restart:
 
 ```bash
 npm run build
-launchctl kickstart -k gui/$(id -u)/com.nanoclaw  # macOS
-# Linux: systemctl --user restart nanoclaw
+launchctl kickstart -k gui/$(id -u)/com.ghostclaw  # macOS
+# Linux: systemctl --user restart ghostclaw
 ```
 
 ## Phase 4: Verify
@@ -229,7 +229,7 @@ npx -y @gongrzhe/server-gmail-autoauth-mcp
 2. Remove `gmail` MCP server and `mcp__gmail__*` from `container/agent-runner/src/index.ts`
 3. Remove `gmail` from `.nanoclaw/state.yaml`
 4. Clear stale agent-runner copies: `rm -r data/sessions/*/agent-runner-src 2>/dev/null || true`
-5. Rebuild: `cd container && ./build.sh && cd .. && npm run build && launchctl kickstart -k gui/$(id -u)/com.nanoclaw` (macOS) or `systemctl --user restart nanoclaw` (Linux)
+5. Rebuild: `cd container && ./build.sh && cd .. && npm run build && launchctl kickstart -k gui/$(id -u)/com.ghostclaw` (macOS) or `systemctl --user restart ghostclaw` (Linux)
 
 ### Channel mode
 
@@ -241,4 +241,4 @@ npx -y @gongrzhe/server-gmail-autoauth-mcp
 6. Uninstall: `npm uninstall googleapis`
 7. Remove `gmail` from `.nanoclaw/state.yaml`
 8. Clear stale agent-runner copies: `rm -r data/sessions/*/agent-runner-src 2>/dev/null || true`
-9. Rebuild: `cd container && ./build.sh && cd .. && npm run build && launchctl kickstart -k gui/$(id -u)/com.nanoclaw` (macOS) or `systemctl --user restart nanoclaw` (Linux)
+9. Rebuild: `cd container && ./build.sh && cd .. && npm run build && launchctl kickstart -k gui/$(id -u)/com.ghostclaw` (macOS) or `systemctl --user restart ghostclaw` (Linux)

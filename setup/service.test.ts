@@ -19,7 +19,7 @@ function generatePlist(
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.nanoclaw</string>
+    <string>com.ghostclaw</string>
     <key>ProgramArguments</key>
     <array>
         <string>${nodePath}</string>
@@ -39,9 +39,9 @@ function generatePlist(
         <string>${homeDir}</string>
     </dict>
     <key>StandardOutPath</key>
-    <string>${projectRoot}/logs/nanoclaw.log</string>
+    <string>${projectRoot}/logs/ghostclaw.log</string>
     <key>StandardErrorPath</key>
-    <string>${projectRoot}/logs/nanoclaw.error.log</string>
+    <string>${projectRoot}/logs/ghostclaw.error.log</string>
 </dict>
 </plist>`;
 }
@@ -53,7 +53,7 @@ function generateSystemdUnit(
   isSystem: boolean,
 ): string {
   return `[Unit]
-Description=NanoClaw Personal Assistant
+Description=GhostClaw Personal Assistant
 After=network.target
 
 [Service]
@@ -64,8 +64,8 @@ Restart=always
 RestartSec=5
 Environment=HOME=${homeDir}
 Environment=PATH=/usr/local/bin:/usr/bin:/bin:${homeDir}/.local/bin
-StandardOutput=append:${projectRoot}/logs/nanoclaw.log
-StandardError=append:${projectRoot}/logs/nanoclaw.error.log
+StandardOutput=append:${projectRoot}/logs/ghostclaw.log
+StandardError=append:${projectRoot}/logs/ghostclaw.error.log
 
 [Install]
 WantedBy=${isSystem ? 'multi-user.target' : 'default.target'}`;
@@ -78,7 +78,7 @@ describe('plist generation', () => {
       '/home/user/nanoclaw',
       '/home/user',
     );
-    expect(plist).toContain('<string>com.nanoclaw</string>');
+    expect(plist).toContain('<string>com.ghostclaw</string>');
   });
 
   it('uses the correct node path', () => {
@@ -105,8 +105,8 @@ describe('plist generation', () => {
       '/home/user/nanoclaw',
       '/home/user',
     );
-    expect(plist).toContain('nanoclaw.log');
-    expect(plist).toContain('nanoclaw.error.log');
+    expect(plist).toContain('ghostclaw.log');
+    expect(plist).toContain('ghostclaw.error.log');
   });
 });
 
@@ -159,18 +159,18 @@ describe('WSL nohup fallback', () => {
   it('generates a valid wrapper script', () => {
     const projectRoot = '/home/user/nanoclaw';
     const nodePath = '/usr/bin/node';
-    const pidFile = path.join(projectRoot, 'nanoclaw.pid');
+    const pidFile = path.join(projectRoot, 'ghostclaw.pid');
 
     // Simulate what service.ts generates
     const wrapper = `#!/bin/bash
 set -euo pipefail
 cd ${JSON.stringify(projectRoot)}
-nohup ${JSON.stringify(nodePath)} ${JSON.stringify(projectRoot)}/dist/index.js >> ${JSON.stringify(projectRoot)}/logs/nanoclaw.log 2>> ${JSON.stringify(projectRoot)}/logs/nanoclaw.error.log &
+nohup ${JSON.stringify(nodePath)} ${JSON.stringify(projectRoot)}/dist/index.js >> ${JSON.stringify(projectRoot)}/logs/ghostclaw.log 2>> ${JSON.stringify(projectRoot)}/logs/ghostclaw.error.log &
 echo $! > ${JSON.stringify(pidFile)}`;
 
     expect(wrapper).toContain('#!/bin/bash');
     expect(wrapper).toContain('nohup');
     expect(wrapper).toContain(nodePath);
-    expect(wrapper).toContain('nanoclaw.pid');
+    expect(wrapper).toContain('ghostclaw.pid');
   });
 });

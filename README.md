@@ -141,17 +141,17 @@ Run skills in Claude Code to apply them to your fork.
 
 ```bash
 # The /setup skill creates this automatically
-launchctl load ~/Library/LaunchAgents/com.nanoclaw.plist
-launchctl unload ~/Library/LaunchAgents/com.nanoclaw.plist
-launchctl kickstart -k gui/$(id -u)/com.nanoclaw  # restart
+launchctl load ~/Library/LaunchAgents/com.ghostclaw.plist
+launchctl unload ~/Library/LaunchAgents/com.ghostclaw.plist
+launchctl kickstart -k gui/$(id -u)/com.ghostclaw  # restart
 ```
 
 ### Linux (systemd)
 
 ```bash
-systemctl --user start nanoclaw
-systemctl --user stop nanoclaw
-systemctl --user restart nanoclaw
+systemctl --user start ghostclaw
+systemctl --user stop ghostclaw
+systemctl --user restart ghostclaw
 ```
 
 ## Pulling upstream updates
@@ -187,7 +187,7 @@ Yes. Agents can read and write anything on the host. That's the point. Don't run
 
 **Can I add containers back?**
 
-Use upstream NanoClaw instead. Or run `/convert-to-apple-container` on a fresh NanoClaw install.
+Use upstream NanoClaw instead.
 
 **Can I use other models?**
 

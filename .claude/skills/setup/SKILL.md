@@ -132,12 +132,12 @@ AskUserQuestion: Agent access to external directories?
 ## 10. Start Service
 
 If service already running: unload first.
-- macOS: `launchctl unload ~/Library/LaunchAgents/com.nanoclaw.plist`
-- Linux: `systemctl --user stop nanoclaw` (or `systemctl stop nanoclaw` if root)
+- macOS: `launchctl unload ~/Library/LaunchAgents/com.ghostclaw.plist`
+- Linux: `systemctl --user stop ghostclaw` (or `systemctl stop ghostclaw` if root)
 
 Run `npx tsx setup/index.ts --step service` and parse the status block.
 
-**If FALLBACK=wsl_no_systemd:** WSL without systemd detected. Tell user they can either enable systemd in WSL (`echo -e "[boot]\nsystemd=true" | sudo tee /etc/wsl.conf` then restart WSL) or use the generated `start-nanoclaw.sh` wrapper.
+**If FALLBACK=wsl_no_systemd:** WSL without systemd detected. Tell user they can either enable systemd in WSL (`echo -e "[boot]\nsystemd=true" | sudo tee /etc/wsl.conf` then restart WSL) or use the generated `start-ghostclaw.sh` wrapper.
 
 **If DOCKER_GROUP_STALE=true:** The user was added to the docker group after their session started — the systemd service can't reach the Docker socket. Ask user to run these two commands:
 
@@ -164,7 +164,7 @@ Replace `USERNAME` with the actual username (from `whoami`). Run the two `sudo` 
 Run `npx tsx setup/index.ts --step verify` and parse the status block.
 
 **If STATUS=failed, fix each:**
-- SERVICE=stopped → `npm run build`, then restart: `launchctl kickstart -k gui/$(id -u)/com.nanoclaw` (macOS) or `systemctl --user restart nanoclaw` (Linux) or `bash start-nanoclaw.sh` (WSL nohup)
+- SERVICE=stopped → `npm run build`, then restart: `launchctl kickstart -k gui/$(id -u)/com.ghostclaw` (macOS) or `systemctl --user restart ghostclaw` (Linux) or `bash start-ghostclaw.sh` (WSL nohup)
 - SERVICE=not_found → re-run step 10
 - CREDENTIALS=missing → re-run step 4
 - WHATSAPP_AUTH=not_found → re-run step 5
@@ -181,6 +181,6 @@ Tell user to test: send a message in their registered chat. Show: `tail -f logs/
 
 **No response to messages:** Check trigger pattern. Main channel doesn't need prefix. Check DB: `npx tsx setup/index.ts --step verify`. Check `logs/nanoclaw.log`.
 
-**WhatsApp disconnected:** `npm run auth` then rebuild and restart: `npm run build && launchctl kickstart -k gui/$(id -u)/com.nanoclaw` (macOS) or `systemctl --user restart nanoclaw` (Linux).
+**WhatsApp disconnected:** `npm run auth` then rebuild and restart: `npm run build && launchctl kickstart -k gui/$(id -u)/com.ghostclaw` (macOS) or `systemctl --user restart ghostclaw` (Linux).
 
-**Unload service:** macOS: `launchctl unload ~/Library/LaunchAgents/com.nanoclaw.plist` | Linux: `systemctl --user stop nanoclaw`
+**Unload service:** macOS: `launchctl unload ~/Library/LaunchAgents/com.ghostclaw.plist` | Linux: `systemctl --user stop ghostclaw`

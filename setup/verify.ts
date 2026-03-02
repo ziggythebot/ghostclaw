@@ -6,19 +6,13 @@
  */
 import { execSync } from 'child_process';
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
 
 import Database from 'better-sqlite3';
 
 import { STORE_DIR } from '../src/config.js';
 import { logger } from '../src/logger.js';
-import {
-  getPlatform,
-  getServiceManager,
-  hasSystemd,
-  isRoot,
-} from './platform.js';
+import { getServiceManager, isRoot } from './platform.js';
 import { emitStatus } from './status.js';
 
 export async function run(_args: string[]): Promise<void> {
@@ -35,9 +29,9 @@ export async function run(_args: string[]): Promise<void> {
   if (mgr === 'launchd') {
     try {
       const output = execSync('launchctl list', { encoding: 'utf-8' });
-      if (output.includes('com.nanoclaw')) {
+      if (output.includes('com.ghostclaw')) {
         // Check if it has a PID (actually running)
-        const line = output.split('\n').find((l) => l.includes('com.nanoclaw'));
+        const line = output.split('\n').find((l) => l.includes('com.ghostclaw'));
         if (line) {
           const pidField = line.trim().split(/\s+/)[0];
           service = pidField !== '-' && pidField ? 'running' : 'stopped';
@@ -49,14 +43,14 @@ export async function run(_args: string[]): Promise<void> {
   } else if (mgr === 'systemd') {
     const prefix = isRoot() ? 'systemctl' : 'systemctl --user';
     try {
-      execSync(`${prefix} is-active nanoclaw`, { stdio: 'ignore' });
+      execSync(`${prefix} is-active ghostclaw`, { stdio: 'ignore' });
       service = 'running';
     } catch {
       try {
         const output = execSync(`${prefix} list-unit-files`, {
           encoding: 'utf-8',
         });
-        if (output.includes('nanoclaw')) {
+        if (output.includes('ghostclaw')) {
           service = 'stopped';
         }
       } catch {
@@ -65,7 +59,7 @@ export async function run(_args: string[]): Promise<void> {
     }
   } else {
     // Check for nohup PID file
-    const pidFile = path.join(projectRoot, 'nanoclaw.pid');
+    const pidFile = path.join(projectRoot, 'ghostclaw.pid');
     if (fs.existsSync(pidFile)) {
       try {
         const pid = fs.readFileSync(pidFile, 'utf-8').trim();
@@ -80,21 +74,7 @@ export async function run(_args: string[]): Promise<void> {
   }
   logger.info({ service }, 'Service status');
 
-  // 2. Check container runtime
-  let containerRuntime = 'none';
-  try {
-    execSync('command -v container', { stdio: 'ignore' });
-    containerRuntime = 'apple-container';
-  } catch {
-    try {
-      execSync('docker info', { stdio: 'ignore' });
-      containerRuntime = 'docker';
-    } catch {
-      // No runtime
-    }
-  }
-
-  // 3. Check credentials
+  // 2. Check credentials
   let credentials = 'missing';
   const envFile = path.join(projectRoot, '.env');
   if (fs.existsSync(envFile)) {
@@ -127,16 +107,6 @@ export async function run(_args: string[]): Promise<void> {
     }
   }
 
-  // 6. Check mount allowlist
-  let mountAllowlist = 'missing';
-  if (
-    fs.existsSync(
-      path.join(homeDir, '.config', 'nanoclaw', 'mount-allowlist.json'),
-    )
-  ) {
-    mountAllowlist = 'configured';
-  }
-
   // Determine overall status
   const status =
     service === 'running' &&
@@ -150,11 +120,9 @@ export async function run(_args: string[]): Promise<void> {
 
   emitStatus('VERIFY', {
     SERVICE: service,
-    CONTAINER_RUNTIME: containerRuntime,
     CREDENTIALS: credentials,
     WHATSAPP_AUTH: whatsappAuth,
     REGISTERED_GROUPS: registeredGroups,
-    MOUNT_ALLOWLIST: mountAllowlist,
     STATUS: status,
     LOG: 'logs/setup.log',
   });

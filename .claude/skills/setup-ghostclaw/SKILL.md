@@ -100,14 +100,14 @@ AskUserQuestion: Set up as a background service? (Yes / No, I'll run it manually
 If yes, detect OS:
 
 **macOS:**
-Create `~/Library/LaunchAgents/com.nanoclaw.plist`:
+Create `~/Library/LaunchAgents/com.ghostclaw.plist`:
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.nanoclaw</string>
+    <string>com.ghostclaw</string>
     <key>ProgramArguments</key>
     <array>
         <string>NODE_PATH</string>
@@ -138,7 +138,7 @@ Replace NODE_PATH, PROJECT_ROOT, HOME with actual values.
 
 ```bash
 mkdir -p PROJECT_ROOT/logs
-launchctl load ~/Library/LaunchAgents/com.nanoclaw.plist
+launchctl load ~/Library/LaunchAgents/com.ghostclaw.plist
 ```
 
 **Linux:**
