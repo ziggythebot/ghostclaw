@@ -56,7 +56,10 @@ function readSecrets(): Record<string, string> {
 /**
  * Ensure per-group directories and settings exist.
  */
-function ensureGroupDirs(group: RegisteredGroup, isMain: boolean): {
+function ensureGroupDirs(
+  group: RegisteredGroup,
+  isMain: boolean,
+): {
   groupDir: string;
   groupIpcDir: string;
   groupSessionsDir: string;
@@ -156,7 +159,10 @@ export async function runContainerAgent(
   const groupDir = resolveGroupFolderPath(group.folder);
   fs.mkdirSync(groupDir, { recursive: true });
 
-  const { groupIpcDir, groupSessionsDir } = ensureGroupDirs(group, input.isMain);
+  const { groupIpcDir, groupSessionsDir } = ensureGroupDirs(
+    group,
+    input.isMain,
+  );
   const agentEntrypoint = getAgentRunnerEntrypoint();
 
   const safeName = group.folder.replace(/[^a-zA-Z0-9-]/g, '-');
@@ -193,7 +199,7 @@ export async function runContainerAgent(
   return new Promise((resolve) => {
     // Build environment for the agent process
     const agentEnv: Record<string, string> = {
-      ...process.env as Record<string, string>,
+      ...(process.env as Record<string, string>),
       // NanoClaw-specific paths (replaces container volume mounts)
       NANOCLAW_GROUP_DIR: groupDir,
       NANOCLAW_IPC_DIR: groupIpcDir,
