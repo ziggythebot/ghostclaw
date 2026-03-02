@@ -1,20 +1,33 @@
 # GhostClaw
 
-Your own AI assistant with its own phone. Runs on a dedicated machine, talks to you on Telegram and WhatsApp, transcribes voice notes, schedules tasks, and learns how you communicate.
+An AI agent that lives on its own computer, has its own accounts, and works as your always-on co-worker.
 
-No cloud hosting. No Docker. No monthly platform fees. Just Node.js, SQLite, and a Claude subscription.
+You interact with it like a person — voice notes on Telegram, mentions in WhatsApp groups, or just texting. It knows how you like to communicate, reads your email, monitors your services, and runs tasks on a schedule. And you customise everything through Claude Code, exactly the way you already work.
 
-## What can it do?
+## Why this exists
 
-- **Its own Telegram identity** — your bot gets a real Telegram account. Message it like a person, no slash commands.
-- **WhatsApp group chats** — add it to group chats. It only responds when mentioned.
-- **Voice notes** — send voice messages, it transcribes and responds as text.
-- **Scheduled tasks** — "remind me every Friday at 3pm" or "check my email every morning at 8am".
-- **Per-group personality** — each chat gets its own tone, memory, and rules. Casual in the group chat, direct in your DM.
-- **Email access** — optionally reads and sends email (Gmail, Outlook, or any IMAP provider).
-- **Health monitoring** — periodic checks on your services, disk space, logs. Silent unless something's wrong.
+**OpenClaw** is beautiful. Watching your agent talk to other agents, self-iterate, install things, and work stuff out for itself is genuinely mind-bending. But it's 500,000 lines of code, the setup is an approximation of the Claude Code terminal that doesn't quite work, and making changes that don't break everything is non-trivial. It's like driving a classic car — charming when it works, but you're fixing it more than driving it.
+
+**NanoClaw** is elegant. 400 lines of core code, completely customisable, works out of the box. But it runs in containers, which is great for security on a shared machine — less great if you want your agent to actually *do things* across your system.
+
+**GhostClaw** is the middle ground. NanoClaw's simplicity and skill system, with the freedom and functionality of OpenClaw. No containers — your agent runs bare metal on a dedicated machine with full access to everything. Add skills the same way you add capabilities in Claude Code. Compatible with both NanoClaw and OpenClaw skill ecosystems.
+
+If you're already an advanced Claude Code user and want an agent that runs wild on its own hardware, this is for you.
+
+## What it does
+
+- **Its own Telegram identity** — message it like a person. No slash commands, no trigger needed in DMs.
+- **WhatsApp group chats** — add it to any group. Responds when mentioned, stays quiet otherwise.
+- **Voice notes** — send voice messages, it transcribes and responds. Both channels.
+- **Scheduled tasks** — "check Hacker News every morning" or "remind me to review PRs every Friday at 3pm". Natural language, cron, or intervals.
+- **Per-group personality** — each chat gets its own tone, memory, and rules. Direct in your DM, casual in the group chat.
+- **Email** — reads and sends email. Picks up verification codes, flags urgent messages, sends summaries. Gmail, Outlook, or any IMAP.
+- **Health monitoring** — heartbeat checks on disk space, services, logs. Daily briefings. Silent unless something needs attention.
+- **Fully modifiable from Claude Code** — every behaviour, every skill, every personality file. If you can do it in Claude Code, you can teach your bot to do it.
 
 ## Quick start
+
+Buy a Mac Mini (or use any dedicated Mac/Linux machine). Set up fresh accounts — iCloud, Gmail, GitHub, whatever you want the agent to have access to.
 
 ```bash
 git clone https://github.com/ziggythebot/ghostclaw.git
@@ -22,31 +35,17 @@ cd ghostclaw
 npm install
 ```
 
-Then open [Claude Code](https://claude.ai/download) and run:
+Open [Claude Code](https://claude.ai/download) and run:
 
 ```
 /setup-ghostclaw
 ```
 
-It walks you through everything: authentication, Telegram bot creation, personality setup, and getting the service running. Takes about 10 minutes.
+It walks you through everything: authentication, Telegram bot setup, personality building, and getting the service running. You'll need a couple of API keys (Claude, optionally OpenAI for voice) and to create a Telegram bot via @BotFather. About 10 minutes.
 
-## How it works
+## Adding skills
 
-```
-You (Telegram/WhatsApp) --> GhostClaw --> Claude --> Response
-```
-
-One Node.js process. Messages stored in SQLite. Claude runs as a child process via the Agent SDK. No containers, no orchestration, no external services beyond Claude and (optionally) OpenAI for voice.
-
-## The soul system
-
-Each chat group has a `CLAUDE.md` file that defines how the bot behaves. Your main channel might say "be direct, no emoji, have opinions." A group chat with friends might say "be casual and funny, only chime in when mentioned."
-
-The setup wizard builds your soul automatically, or you can write it by hand. The bot reads it fresh every time — edit the file, personality changes instantly.
-
-## Add-ons
-
-After setup, you can add optional features by running these in Claude Code:
+Skills work exactly like Claude Code customisations. Run a command, it gets wired in:
 
 | Command | What it adds |
 |---------|-------------|
@@ -54,16 +53,31 @@ After setup, you can add optional features by running these in Claude Code:
 | `/add-morning-briefing` | Daily or weekly briefings |
 | `/add-gmail-agent` | Email read/send (Gmail, Outlook, or IMAP) |
 | `/add-update-check` | Weekly check for GhostClaw updates |
-| `/add-voice` | Voice note transcription (needs OpenAI key) |
+| `/add-voice` | Voice note transcription |
 | `/add-slack` | Slack as an additional channel |
 | `/add-telegram-swarm` | Multi-bot agent teams |
 
-## Requirements
+Skills are security-scanned before installation. Build your own using the same `CLAUDE.md` + manifest pattern. Because GhostClaw inherits NanoClaw's skill layer, it's compatible with the broader Claw ecosystem.
 
-- A dedicated machine (Mac or Linux — a Mac Mini works great)
-- Node.js 20+
-- [Claude Code](https://claude.ai/download) with a Claude Max subscription or API key
-- A Telegram bot token (free, from @BotFather)
+## The soul system
+
+Each chat has a `CLAUDE.md` that defines the bot's personality for that context. Your main channel might say:
+
+> Be direct. No emoji. Have opinions. Don't say "there are several approaches" — say "this is the move, here's why."
+
+A group chat with friends might say:
+
+> Be casual and funny. Only respond when mentioned. Keep it short.
+
+Edit the file, the personality changes instantly. The setup wizard builds your initial soul automatically — it asks how you like to communicate and what annoys you about AI responses.
+
+## How it works
+
+```
+You (Telegram/WhatsApp) --> GhostClaw --> Claude (Agent SDK) --> Response
+```
+
+One Node.js process. SQLite for state. Claude runs as a child process. No containers, no orchestration, no cloud infrastructure. Your bot runs directly on the host with full system access — that's the point.
 
 ## Configuration
 
@@ -75,7 +89,7 @@ All config lives in `.env`. The setup wizard creates this for you.
 | `ANTHROPIC_API_KEY` | Yes* | Or use an API key instead |
 | `ASSISTANT_NAME` | Yes | Bot name (trigger word in groups) |
 | `TELEGRAM_BOT_TOKEN` | Yes | From @BotFather |
-| `GHOSTCLAW_MODEL` | No | Default: `claude-sonnet-4-6`. Options: `claude-opus-4-6`, `claude-haiku-4-5-20251001` |
+| `GHOSTCLAW_MODEL` | No | Default: `claude-sonnet-4-6`. Also: `claude-opus-4-6`, `claude-haiku-4-5-20251001` |
 | `OPENAI_API_KEY` | No | For voice transcription |
 | `TELEGRAM_ONLY` | No | Set `true` to skip WhatsApp |
 | `GMAIL_MCP_ENABLED` | No | Set `1` for email integration |
@@ -110,25 +124,21 @@ launchctl kickstart -k gui/$(id -u)/com.ghostclaw  # macOS
 
 ## FAQ
 
-**What does it cost to run?**
+**What does it cost?**
 
-Just your Claude subscription (Max or API). Voice transcription uses OpenAI's Whisper API (~$0.006/minute). Email integration is free. No platform fees.
+Your Claude subscription (Max or API) and optionally OpenAI for voice (~$0.006/minute). No platform fees.
 
 **Is this secure?**
 
-The bot has full access to whatever machine it runs on. That's by design — run it on a dedicated machine, not your daily driver. Skills are security-scanned before installation.
+The bot has full access to its machine. That's the point — don't run this on a machine with data it shouldn't see. Run it on dedicated hardware with fresh accounts. Skills are security-scanned before installation.
 
-**Can I use models other than Claude?**
+**What's the relationship to NanoClaw and OpenClaw?**
 
-Set `GHOSTCLAW_MODEL` in `.env`. Sonnet is the default (fast and cheap). Opus for maximum capability. Haiku for speed.
-
-**What's the relationship to NanoClaw?**
-
-GhostClaw is a fork of [NanoClaw](https://github.com/qwibitai/nanoclaw) with containers removed. NanoClaw skills work without modification. You'll see some `NANOCLAW_*` references in the code — that's intentional for compatibility.
+GhostClaw is a fork of [NanoClaw](https://github.com/qwibitai/nanoclaw) with containers removed and OpenClaw-inspired features added (heartbeat, briefings, email, monitoring). NanoClaw skills work without modification. Think of it as NanoClaw's simplicity with OpenClaw's ambition.
 
 ## Credits
 
-Fork of [NanoClaw](https://github.com/qwibitai/nanoclaw) by [qwibitai](https://github.com/qwibitai).
+Fork of [NanoClaw](https://github.com/qwibitai/nanoclaw) by [qwibitai](https://github.com/qwibitai). Core architecture, skills engine, and agent runner are their work.
 
 ## Licence
 
