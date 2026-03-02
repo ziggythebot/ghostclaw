@@ -127,9 +127,9 @@ Create `~/Library/LaunchAgents/com.ghostclaw.plist`:
         <string>HOME</string>
     </dict>
     <key>StandardOutPath</key>
-    <string>PROJECT_ROOT/logs/nanoclaw.log</string>
+    <string>PROJECT_ROOT/logs/ghostclaw.log</string>
     <key>StandardErrorPath</key>
-    <string>PROJECT_ROOT/logs/nanoclaw.error.log</string>
+    <string>PROJECT_ROOT/logs/ghostclaw.error.log</string>
 </dict>
 </plist>
 ```
@@ -230,7 +230,7 @@ Based on user description, create initial memory files:
 Tell the user to send a message to the bot. Check logs to confirm it responds.
 
 ```bash
-tail -20 logs/nanoclaw.log | grep -E "Processing|Agent output|error"
+tail -20 logs/ghostclaw.log | grep -E "Processing|Agent output|error"
 ```
 
 If working: "You're set. Talk to BOTNAME — it knows who you are."
