@@ -1,5 +1,5 @@
 /**
- * Agent Runner for NanoClaw
+ * Agent Runner for GhostClaw
  * Spawns agent execution as direct Node.js processes (no containers)
  */
 import { ChildProcess, spawn } from 'child_process';
@@ -200,7 +200,7 @@ export async function runContainerAgent(
     // Build environment for the agent process
     const agentEnv: Record<string, string> = {
       ...(process.env as Record<string, string>),
-      // NanoClaw-specific paths (replaces container volume mounts)
+      // GhostClaw paths (replaces container volume mounts)
       NANOCLAW_GROUP_DIR: groupDir,
       NANOCLAW_IPC_DIR: groupIpcDir,
       NANOCLAW_GLOBAL_DIR: fs.existsSync(globalDir) ? globalDir : '',

@@ -141,7 +141,7 @@ async function connectSocket(
       } catch {}
       console.log('\n✓ Successfully authenticated with WhatsApp!');
       console.log('  Credentials saved to store/auth/');
-      console.log('  You can now start the NanoClaw service.\n');
+      console.log('  You can now start the GhostClaw service.\n');
 
       // Give it a moment to save credentials, then exit
       setTimeout(() => process.exit(0), 1000);

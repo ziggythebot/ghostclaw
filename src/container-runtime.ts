@@ -1,5 +1,5 @@
 /**
- * Container runtime abstraction for NanoClaw.
+ * Container runtime abstraction for GhostClaw.
  * Containerization removed — agents run directly on host.
  * These are no-ops kept for API compatibility.
  */
