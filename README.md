@@ -23,7 +23,8 @@ If you're already an advanced Claude Code user and want an agent that runs wild 
 - **Per-group personality** — each chat gets its own tone, memory, and rules. Direct in your DM, casual in the group chat.
 - **Email** — reads and sends email. Picks up verification codes, flags urgent messages, sends summaries. Gmail, Outlook, or any IMAP.
 - **Health monitoring** — heartbeat checks on disk space, services, logs. Daily briefings. Silent unless something needs attention.
-- **Fully modifiable from Claude Code** — every behaviour, every skill, every personality file. If you can do it in Claude Code, you can teach your bot to do it.
+- **Layer any Claude Code skill onto your bot** — anything you can do in Claude Code, you can add to your agent. NanoClaw skills, OpenClaw skills, or your own. Every install is automatically security-scanned.
+- **Fully modifiable from Claude Code** — every behaviour, every personality file, every integration. Customise exactly the way you already work.
 
 ## Quick start
 
