@@ -96,6 +96,9 @@ vi.mock('@whiskeysockets/baileys', () => {
       },
       saveCreds: vi.fn(),
     }),
+    downloadMediaMessage: vi
+      .fn()
+      .mockResolvedValue(Buffer.from('mock audio data')),
   };
 });
 
