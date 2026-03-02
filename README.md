@@ -62,6 +62,7 @@ Once running, add capabilities by typing commands in Claude Code:
 | `/add-gmail-agent` | Email read/send (Gmail, Outlook, or IMAP) |
 | `/add-update-check` | Weekly check for GhostClaw updates |
 | `/add-voice` | Voice note transcription |
+| `/add-voice-reply` | Bot replies with voice notes (ElevenLabs) |
 | `/add-slack` | Slack as an additional channel |
 | `/add-telegram-swarm` | Multi-bot agent teams |
 

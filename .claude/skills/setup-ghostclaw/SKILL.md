@@ -256,5 +256,6 @@ After core setup, offer optional extras. Use AskUserQuestion with multiSelect:
 - `/add-morning-briefing` — scheduled daily/weekly briefings
 - `/add-gmail-agent` — email access for the bot (needs Google Cloud OAuth)
 - `/add-voice` — voice note transcription (needs OpenAI key)
+- `/add-voice-reply` — bot replies with voice notes via ElevenLabs (needs ElevenLabs key)
 
 Run each selected skill in sequence. If none selected, skip — they can always add these later.
