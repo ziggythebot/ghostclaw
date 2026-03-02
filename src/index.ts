@@ -160,6 +160,11 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
 
   const prompt = formatMessages(missedMessages);
 
+  // Check if any message in the batch was a voice note (tagged [Voice: ...])
+  const hasVoiceMessage = missedMessages.some((m) =>
+    m.content.startsWith('[Voice:'),
+  );
+
   // Advance cursor so the piping path in startMessageLoop won't re-fetch
   // these messages. Save the old cursor so we can roll back on error.
   const previousCursor = lastAgentTimestamp[chatJid] || '';
@@ -201,7 +206,7 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
       const text = raw.replace(/<internal>[\s\S]*?<\/internal>/g, '').trim();
       logger.info({ group: group.name }, `Agent output: ${raw.slice(0, 200)}`);
       if (text) {
-        await channel.sendMessage(chatJid, text);
+        await channel.sendMessage(chatJid, text, hasVoiceMessage);
         outputSentToUser = true;
       }
       // Only reset idle timer on actual results, not session-update markers (result: null)

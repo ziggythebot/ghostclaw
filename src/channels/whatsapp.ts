@@ -19,7 +19,11 @@ import {
 } from '../config.js';
 import { getLastGroupSync, setLastGroupSync, updateChatName } from '../db.js';
 import { logger } from '../logger.js';
-import { isVoiceMessage, transcribeAudioMessage } from '../transcription.js';
+import {
+  isVoiceMessage,
+  transcribeAudioMessage,
+  textToSpeech,
+} from '../transcription.js';
 import {
   Channel,
   OnInboundMessage,
@@ -260,7 +264,11 @@ export class WhatsAppChannel implements Channel {
     });
   }
 
-  async sendMessage(jid: string, text: string): Promise<void> {
+  async sendMessage(
+    jid: string,
+    text: string,
+    voiceReply?: boolean,
+  ): Promise<void> {
     // Prefix bot messages with assistant name so users know who's speaking.
     // On a shared number, prefix is also needed in DMs (including self-chat)
     // to distinguish bot output from user messages.
@@ -277,7 +285,23 @@ export class WhatsAppChannel implements Channel {
       );
       return;
     }
+
     try {
+      // Send as voice note if replying to a voice message
+      if (voiceReply) {
+        const audioBuffer = await textToSpeech(text);
+        if (audioBuffer) {
+          await this.sock.sendMessage(jid, {
+            audio: audioBuffer,
+            ptt: true,
+            mimetype: 'audio/mp4',
+          });
+          logger.info({ jid, length: text.length }, 'Voice message sent');
+          return;
+        }
+      }
+
+      // Send as text
       await this.sock.sendMessage(jid, { text: prefixed });
       logger.info({ jid, length: prefixed.length }, 'Message sent');
     } catch (err) {

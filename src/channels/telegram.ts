@@ -1,8 +1,8 @@
-import { Bot } from 'grammy';
+import { Bot, InputFile } from 'grammy';
 
 import { ASSISTANT_NAME, TRIGGER_PATTERN } from '../config.js';
 import { logger } from '../logger.js';
-import { transcribeBuffer } from '../transcription.js';
+import { transcribeBuffer, textToSpeech } from '../transcription.js';
 import {
   Channel,
   OnChatMetadata,
@@ -232,7 +232,11 @@ export class TelegramChannel implements Channel {
     });
   }
 
-  async sendMessage(jid: string, text: string): Promise<void> {
+  async sendMessage(
+    jid: string,
+    text: string,
+    voiceReply?: boolean,
+  ): Promise<void> {
     if (!this.bot) {
       logger.warn('Telegram bot not initialized');
       return;
@@ -241,6 +245,23 @@ export class TelegramChannel implements Channel {
     try {
       const numericId = jid.replace(/^tg:/, '');
 
+      // Send as voice note if replying to a voice message
+      if (voiceReply) {
+        const audioBuffer = await textToSpeech(text);
+        if (audioBuffer) {
+          await this.bot.api.sendVoice(
+            numericId,
+            new InputFile(audioBuffer, 'voice.mp3'),
+          );
+          logger.info(
+            { jid, length: text.length },
+            'Telegram voice message sent',
+          );
+          return;
+        }
+      }
+
+      // Send as text
       // Telegram has a 4096 character limit per message — split if needed
       const MAX_LENGTH = 4096;
       if (text.length <= MAX_LENGTH) {

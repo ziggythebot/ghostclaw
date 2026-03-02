@@ -50,6 +50,8 @@ function readSecrets(): Record<string, string> {
     'ANTHROPIC_API_KEY',
     'ANTHROPIC_BASE_URL',
     'ANTHROPIC_AUTH_TOKEN',
+    'ELEVENLABS_API_KEY',
+    'ELEVENLABS_VOICE_ID',
   ]);
 }
 
