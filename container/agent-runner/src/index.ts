@@ -571,6 +571,15 @@ async function main(): Promise<void> {
         break;
       }
 
+      // Scheduled tasks are one-shot — exit after the first query instead
+      // of waiting for IPC messages that will never arrive. This frees the
+      // group slot immediately so user messages aren't blocked.
+      if (containerInput.isScheduledTask) {
+        log('Scheduled task complete, exiting');
+        writeOutput({ status: 'success', result: null, newSessionId: sessionId });
+        break;
+      }
+
       // Emit session update so host can track it
       writeOutput({ status: 'success', result: null, newSessionId: sessionId });
 

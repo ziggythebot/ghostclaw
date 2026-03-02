@@ -45,6 +45,17 @@ vi.mock('child_process', () => ({
   exec: vi.fn(),
 }));
 
+// Mock transcription — avoid real HTTP calls and env-dependent behavior
+vi.mock('../transcription.js', () => ({
+  transcribeAudioMessage: vi
+    .fn()
+    .mockResolvedValue('Hello from a voice note'),
+  isVoiceMessage: vi.fn(
+    (msg: any) => msg.message?.audioMessage?.ptt === true,
+  ),
+  textToSpeech: vi.fn().mockResolvedValue(null),
+}));
+
 // Build a fake WASocket that's an EventEmitter with the methods we need
 function createFakeSocket() {
   const ev = new EventEmitter();
@@ -564,7 +575,7 @@ describe('WhatsAppChannel', () => {
         expect.objectContaining({
           id: 'msg-8',
           sender_name: 'Frank',
-          content: expect.stringMatching(/^\[Voice: /),
+          content: '[Voice: Hello from a voice note]',
         }),
       );
     });

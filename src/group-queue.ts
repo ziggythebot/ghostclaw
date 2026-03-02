@@ -63,6 +63,18 @@ export class GroupQueue {
     const state = this.getGroup(groupJid);
 
     if (state.active) {
+      // If an idle task container is blocking messages, kill it so the
+      // message can be processed immediately instead of waiting for the
+      // task's idle timeout (which can be 30+ minutes).
+      if (state.isTaskContainer && state.idleWaiting) {
+        logger.info(
+          { groupJid },
+          'Preempting idle task container for incoming message',
+        );
+        this.closeStdin(groupJid);
+        // The message will be picked up when drainGroup runs after the
+        // task container exits (pendingMessages flag below).
+      }
       state.pendingMessages = true;
       logger.debug({ groupJid }, 'Container active, message queued');
       return;
