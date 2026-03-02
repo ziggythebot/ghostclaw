@@ -24,14 +24,14 @@ cat > data/ipc/main/tasks/update_check_$(date +%s).json << EOF
   "type": "schedule_task",
   "prompt": "Check for GhostClaw updates.\n\n1. Run: git fetch origin 2>&1\n2. Run: git log HEAD..origin/main --oneline\n3. If there are new commits, message the user with how many and a one-line summary of each.\n4. If no new commits, respond with <internal>GhostClaw is up to date</internal> and nothing else.\n\nWhen notifying about updates, always include:\n- Number of new commits\n- One-line summary of each\n- Remind them: 'Review the changes before applying. Run git diff HEAD..origin/main to see the full diff. When ready: git merge origin/main && npm run build && launchctl kickstart -k gui/$(id -u)/com.nanoclaw'\n- Remind them to review for security — this code runs with full system access.",
   "schedule_type": "cron",
-  "schedule_value": "0 10 1 * *",
+  "schedule_value": "0 10 * * 1",
   "context_mode": "isolated",
   "targetJid": "$CHAT_JID"
 }
 EOF
 ```
 
-This runs at 10am on the 1st of every month.
+This runs at 10am on the every Monday.
 
 ## What the user sees
 
