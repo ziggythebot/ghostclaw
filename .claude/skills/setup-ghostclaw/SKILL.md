@@ -39,6 +39,22 @@ CLAUDE_CODE_OAUTH_TOKEN=<token>
 ANTHROPIC_API_KEY=<key>
 ```
 
+### Model selection
+
+AskUserQuestion: Which model should the bot use?
+- Sonnet (Recommended) — fast, capable, cost-effective for most tasks
+- Opus — most capable, slower, higher cost
+- Haiku — fastest, cheapest, good for simple tasks
+
+Add to `.env` based on choice:
+```
+GHOSTCLAW_MODEL=claude-sonnet-4-6    # Sonnet (recommended)
+# GHOSTCLAW_MODEL=claude-opus-4-6    # Opus
+# GHOSTCLAW_MODEL=claude-haiku-4-5-20251001  # Haiku
+```
+
+If they skip or aren't sure, default to Sonnet. Tell them: "You can change this any time by editing `GHOSTCLAW_MODEL` in `.env` and restarting."
+
 ### Bot name
 
 AskUserQuestion: What should the bot be called?
@@ -237,9 +253,12 @@ If working: "You're set. Talk to BOTNAME — it knows who you are."
 
 ## Phase 8: Optional extras
 
-After core setup, offer:
+After core setup, offer optional extras. Use AskUserQuestion with multiSelect:
 
-- `/add-heartbeat` — periodic monitoring checks
-- `/add-morning-briefing` — scheduled briefings
-- `/add-gmail-agent` — email access for the bot
+- `/add-heartbeat` — periodic monitoring checks (recommended)
+- `/add-update-check` — weekly check for GhostClaw updates (recommended)
+- `/add-morning-briefing` — scheduled daily/weekly briefings
+- `/add-gmail-agent` — email access for the bot (needs Google Cloud OAuth)
 - `/add-voice` — voice note transcription (needs OpenAI key)
+
+Run each selected skill in sequence. If none selected, skip — they can always add these later.

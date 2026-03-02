@@ -422,6 +422,7 @@ async function runQuery(
     prompt: stream,
     options: {
       cwd,
+      model: process.env.GHOSTCLAW_MODEL || undefined,
       additionalDirectories: extraDirs.length > 0 ? extraDirs : undefined,
       resume: sessionId,
       resumeSessionAt: resumeAt,

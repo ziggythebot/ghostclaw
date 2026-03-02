@@ -26,7 +26,7 @@ Run these checks periodically. Only message the user if something needs attentio
 
 ## Checks
 
-- [ ] **NanoClaw errors**: `tail -20 ~/nanoclaw/logs/nanoclaw.error.log` — alert if non-empty in the last hour
+- [ ] **GhostClaw errors**: `tail -20 ~/nanoclaw/logs/ghostclaw.error.log` — alert if non-empty in the last hour
 - [ ] **Disk space**: `df -h /` — alert if usage >80%
 - [ ] **Unread emails**: Check Gmail for unread emails in the last hour — summarise if any look urgent
 
@@ -56,7 +56,7 @@ mkdir -p "$NANOCLAW_DATA_DIR/ipc/main/tasks"
 cat > "$NANOCLAW_DATA_DIR/ipc/main/tasks/heartbeat_$(date +%s).json" << 'EOF'
 {
   "type": "schedule_task",
-  "prompt": "Read HEARTBEAT.md and run each check listed. Only message the user if something needs attention. If everything is fine, respond with <internal>All checks passed</internal> and nothing else.",
+  "prompt": "Read $NANOCLAW_GROUP_DIR/HEARTBEAT.md (or ./HEARTBEAT.md in the current directory) and run each check listed. Only message the user if something needs attention. If everything is fine, respond with <internal>All checks passed</internal> and nothing else.",
   "schedule_type": "cron",
   "schedule_value": "*/30 * * * *",
   "context_mode": "isolated"
@@ -71,7 +71,7 @@ Adjust the cron value based on the user's preference.
 Wait for the next cron trigger (or manually create a test by adding a failing check to HEARTBEAT.md), then check logs:
 
 ```bash
-grep -i "heartbeat\|All checks passed" ~/nanoclaw/logs/nanoclaw.log | tail -5
+grep -i "heartbeat\|All checks passed" ~/nanoclaw/logs/ghostclaw.log | tail -5
 ```
 
 ## Customisation

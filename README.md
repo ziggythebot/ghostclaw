@@ -166,6 +166,7 @@ All config lives in `.env`. See `.env.example` for all options.
 | `ASSISTANT_NAME` | Yes | Bot name (trigger word in groups) |
 | `TELEGRAM_BOT_TOKEN` | Recommended | From @BotFather |
 | `TELEGRAM_ONLY` | No | Set `true` to skip WhatsApp |
+| `GHOSTCLAW_MODEL` | No | Model ID (default: subscription best). Options: `claude-sonnet-4-6`, `claude-opus-4-6`, `claude-haiku-4-5-20251001` |
 | `OPENAI_API_KEY` | No | For voice transcription |
 | `GMAIL_MCP_ENABLED` | No | Set `1` for Gmail integration |
 
