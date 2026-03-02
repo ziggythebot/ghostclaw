@@ -166,7 +166,7 @@ export async function runContainerAgent(
   const agentEntrypoint = getAgentRunnerEntrypoint();
 
   const safeName = group.folder.replace(/[^a-zA-Z0-9-]/g, '-');
-  const processName = `nanoclaw-${safeName}-${Date.now()}`;
+  const processName = `ghostclaw-${safeName}-${Date.now()}`;
 
   // Global memory directory
   const globalDir = path.join(GROUPS_DIR, 'global');
