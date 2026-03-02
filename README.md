@@ -65,6 +65,7 @@ Once running, add capabilities by typing commands in Claude Code:
 | `/add-voice-reply` | Bot replies with voice notes (ElevenLabs) |
 | `/add-slack` | Slack as an additional channel |
 | `/add-telegram-swarm` | Multi-bot agent teams |
+| `/update-ghostclaw` | Safe update: backup, pull, migrate, rebuild, restart |
 
 Skills are security-scanned before installation. Build your own or pull from the NanoClaw/OpenClaw ecosystem — they're compatible.
 
@@ -124,8 +125,17 @@ systemctl --user restart ghostclaw
 
 ## Updating
 
+Inside Claude Code:
+
+```
+/update-ghostclaw
+```
+
+That's it. It backs up your current state, pulls the latest, runs migrations, rebuilds, and restarts the service. If anything goes wrong, it gives you a rollback tag.
+
+Manual alternative:
 ```bash
-git pull && npm run build
+git pull && npm install && npm run build
 launchctl kickstart -k gui/$(id -u)/com.ghostclaw  # macOS
 # systemctl --user restart ghostclaw                # Linux
 ```
