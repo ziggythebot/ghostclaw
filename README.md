@@ -1,4 +1,17 @@
-# GhostClaw
+<p align="center">
+  <img src=".github/ghostclaw-mark-512.png" width="120" alt="GhostClaw">
+</p>
+
+<h1 align="center"><strong>Ghost</strong>Claw</h1>
+<p align="center"><em>your silent co-worker</em></p>
+
+<p align="center">
+  <a href="https://ghostclaw-site.vercel.app">Website</a> &nbsp;·&nbsp;
+  <a href="#install">Install</a> &nbsp;·&nbsp;
+  <a href="#what-it-does">Features</a>
+</p>
+
+---
 
 An AI agent that lives on its own computer, has its own accounts, and works as your always-on co-worker.
 
