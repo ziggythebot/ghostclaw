@@ -19,8 +19,8 @@ import { logger } from './logger.js';
 import { RegisteredGroup } from './types.js';
 
 // Sentinel markers for robust output parsing (must match agent-runner)
-const OUTPUT_START_MARKER = '---NANOCLAW_OUTPUT_START---';
-const OUTPUT_END_MARKER = '---NANOCLAW_OUTPUT_END---';
+const OUTPUT_START_MARKER = '---GHOSTCLAW_OUTPUT_START---';
+const OUTPUT_END_MARKER = '---GHOSTCLAW_OUTPUT_END---';
 
 export interface ContainerInput {
   prompt: string;
@@ -135,9 +135,7 @@ function ensureGroupDirs(
       const existingServers = existing.mcpServers || {};
       let changed = false;
       for (const [name, config] of Object.entries(globalMcpServers)) {
-        if (
-          JSON.stringify(existingServers[name]) !== JSON.stringify(config)
-        ) {
+        if (JSON.stringify(existingServers[name]) !== JSON.stringify(config)) {
           existingServers[name] = config;
           changed = true;
         }
@@ -255,11 +253,11 @@ export async function runContainerAgent(
     // Build environment for the agent process
     const agentEnv: Record<string, string> = {
       ...(process.env as Record<string, string>),
-      // GhostClaw paths (replaces container volume mounts)
-      NANOCLAW_GROUP_DIR: groupDir,
-      NANOCLAW_IPC_DIR: groupIpcDir,
-      NANOCLAW_GLOBAL_DIR: fs.existsSync(globalDir) ? globalDir : '',
-      NANOCLAW_EXTRA_DIR: extraDirs.length > 0 ? extraDirs[0] : '',
+      // GhostClaw paths
+      GHOSTCLAW_GROUP_DIR: groupDir,
+      GHOSTCLAW_IPC_DIR: groupIpcDir,
+      GHOSTCLAW_GLOBAL_DIR: fs.existsSync(globalDir) ? globalDir : '',
+      GHOSTCLAW_EXTRA_DIR: extraDirs.length > 0 ? extraDirs[0] : '',
       // Claude Agent SDK respects CLAUDE_CONFIG_DIR for session isolation.
       // We do NOT override HOME — tools like gh, Gmail MCP, and any future
       // MCP servers need the real HOME to find their credentials.

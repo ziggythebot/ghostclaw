@@ -11,7 +11,7 @@ This skill adds automatic voice message transcription to NanoClaw's WhatsApp cha
 
 ### Check if already applied
 
-Read `.nanoclaw/state.yaml`. If `voice-transcription` is in `applied_skills`, skip to Phase 3 (Configure). The code changes are already in place.
+Read `.ghostclaw/state.yaml`. If `voice-transcription` is in `applied_skills`, skip to Phase 3 (Configure). The code changes are already in place.
 
 ### Ask the user
 
@@ -27,7 +27,7 @@ Run the skills engine to apply this skill's code package.
 
 ### Initialize skills system (if needed)
 
-If `.nanoclaw/` directory doesn't exist yet:
+If `.ghostclaw/` directory doesn't exist yet:
 
 ```bash
 npx tsx scripts/apply-skill.ts --init
@@ -45,7 +45,7 @@ This deterministically:
 - Three-way merges transcription tests into `src/channels/whatsapp.test.ts` (mock + 3 test cases)
 - Installs the `openai` npm dependency
 - Updates `.env.example` with `OPENAI_API_KEY`
-- Records the application in `.nanoclaw/state.yaml`
+- Records the application in `.ghostclaw/state.yaml`
 
 If the apply reports merge conflicts, read the intent files:
 - `modify/src/channels/whatsapp.ts.intent.md` — what changed and invariants for whatsapp.ts
@@ -112,7 +112,7 @@ Tell the user:
 ### Check logs if needed
 
 ```bash
-tail -f logs/nanoclaw.log | grep -i voice
+tail -f logs/ghostclaw.log | grep -i voice
 ```
 
 Look for:

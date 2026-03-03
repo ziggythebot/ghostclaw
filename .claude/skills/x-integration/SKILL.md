@@ -51,7 +51,7 @@ npx dotenv -e .env -- npx tsx .claude/skills/x-integration/scripts/setup.ts
 npm run build
 launchctl kickstart -k gui/$(id -u)/com.ghostclaw  # macOS
 # Linux: systemctl --user restart ghostclaw
-# Verify: launchctl list | grep nanoclaw (macOS) or systemctl --user status nanoclaw (Linux)
+# Verify: launchctl list | grep ghostclaw (macOS) or systemctl --user status ghostclaw (Linux)
 ```
 
 ## Configuration
@@ -61,7 +61,7 @@ launchctl kickstart -k gui/$(id -u)/com.ghostclaw  # macOS
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `CHROME_PATH` | `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome` | Chrome executable path |
-| `NANOCLAW_ROOT` | `process.cwd()` | Project root directory |
+| `GHOSTCLAW_ROOT` | `process.cwd()` | Project root directory |
 | `LOG_LEVEL` | `info` | Logging level (debug, info, warn, error) |
 
 Set in `.env` file (loaded via `dotenv-cli` at runtime):
@@ -105,7 +105,7 @@ Paths relative to project root:
 |------|---------|-----|
 | `data/x-browser-profile/` | Chrome profile with X session | Ignored |
 | `data/x-auth.json` | Auth state marker | Ignored |
-| `logs/nanoclaw.log` | Service logs (contains X operation logs) | Ignored |
+| `logs/ghostclaw.log` | Service logs (contains X operation logs) | Ignored |
 
 ## Architecture
 
@@ -233,7 +233,7 @@ COPY .claude/skills/x-integration/agent.ts ./src/skills/x-integration/
 
 ## Setup
 
-All paths below are relative to project root (`NANOCLAW_ROOT`).
+All paths below are relative to project root (`GHOSTCLAW_ROOT`).
 
 ### 1. Check Chrome Path
 
@@ -278,8 +278,8 @@ launchctl kickstart -k gui/$(id -u)/com.ghostclaw  # macOS
 
 **Verify success:**
 ```bash
-launchctl list | grep nanoclaw  # macOS — should show PID and exit code 0 or -
-# Linux: systemctl --user status nanoclaw
+launchctl list | grep ghostclaw  # macOS — should show PID and exit code 0 or -
+# Linux: systemctl --user status ghostclaw
 ```
 
 ## Usage via WhatsApp
@@ -363,10 +363,10 @@ rm -f data/x-browser-profile/SingletonCookie
 
 ```bash
 # Host logs (relative to project root)
-grep -i "x_post\|x_like\|x_reply\|handleXIpc" logs/nanoclaw.log | tail -20
+grep -i "x_post\|x_like\|x_reply\|handleXIpc" logs/ghostclaw.log | tail -20
 
 # Script errors
-grep -i "error\|failed" logs/nanoclaw.log | tail -20
+grep -i "error\|failed" logs/ghostclaw.log | tail -20
 ```
 
 ### Script Timeout
@@ -406,7 +406,7 @@ If MCP tools not found in container:
 ./container/build.sh 2>&1 | grep -i skill
 
 # Check container has the file
-docker run nanoclaw-agent ls -la /app/src/skills/
+docker run ghostclaw-agent ls -la /app/src/skills/
 ```
 
 ## Security

@@ -27,15 +27,15 @@ describe('constants', () => {
     }
   });
 
-  it('path constants use forward slashes and .nanoclaw prefix', () => {
+  it('path constants use forward slashes and .ghostclaw prefix', () => {
     const pathConstants = [BASE_DIR, BACKUP_DIR, LOCK_FILE, CUSTOM_DIR];
     for (const p of pathConstants) {
       expect(p).not.toContain('\\');
-      expect(p).toMatch(/^\.nanoclaw\//);
+      expect(p).toMatch(/^\.ghostclaw\//);
     }
   });
 
-  it('NANOCLAW_DIR is .nanoclaw', () => {
-    expect(NANOCLAW_DIR).toBe('.nanoclaw');
+  it('NANOCLAW_DIR is .ghostclaw', () => {
+    expect(NANOCLAW_DIR).toBe('.ghostclaw');
   });
 });

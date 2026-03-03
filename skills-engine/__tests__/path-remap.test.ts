@@ -53,7 +53,7 @@ describe('path-remap', () => {
 
     it('ignores remap target that resolves through symlink outside project root', () => {
       const outsideDir = fs.mkdtempSync(
-        path.join(path.dirname(tmpDir), 'nanoclaw-remap-outside-'),
+        path.join(path.dirname(tmpDir), 'ghostclaw-remap-outside-'),
       );
       const linkPath = path.join(tmpDir, 'link-out');
 
@@ -110,7 +110,7 @@ describe('path-remap', () => {
 
     it('drops symlink-based escape entries stored in state', () => {
       const outsideDir = fs.mkdtempSync(
-        path.join(path.dirname(tmpDir), 'nanoclaw-remap-outside-'),
+        path.join(path.dirname(tmpDir), 'ghostclaw-remap-outside-'),
       );
       const linkPath = path.join(tmpDir, 'link-out');
 

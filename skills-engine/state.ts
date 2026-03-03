@@ -19,7 +19,7 @@ export function readState(): SkillState {
   const statePath = getStatePath();
   if (!fs.existsSync(statePath)) {
     throw new Error(
-      '.nanoclaw/state.yaml not found. Run initSkillsSystem() first.',
+      '.ghostclaw/state.yaml not found. Run initSkillsSystem() first.',
     );
   }
   const content = fs.readFileSync(statePath, 'utf-8');

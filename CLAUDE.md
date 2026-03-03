@@ -1,12 +1,12 @@
 # GhostClaw
 
-Personal AI assistant. Fork of [NanoClaw](https://github.com/qwibitai/nanoclaw) with containers removed. See [README.md](README.md) for setup. See [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) for architecture decisions.
+Personal AI assistant. Originally forked from [NanoClaw](https://github.com/qwibitai/nanoclaw), now fully independent with its own architecture.
 
 ## Quick Context
 
 Single Node.js process that connects to Telegram and WhatsApp, routes messages to Claude Agent SDK running as **direct Node.js child processes** (no containers). Each group has isolated filesystem and memory.
 
-**No containers.** Agents run directly on the host machine. `container-runner.ts` spawns `node` processes, passing paths via environment variables (`NANOCLAW_GROUP_DIR`, `NANOCLAW_IPC_DIR`, `NANOCLAW_GLOBAL_DIR`). These env var names are kept for NanoClaw ecosystem compatibility.
+Agents run directly on the host machine. `container-runner.ts` spawns `node` processes, passing paths via environment variables (`GHOSTCLAW_GROUP_DIR`, `GHOSTCLAW_IPC_DIR`, `GHOSTCLAW_GLOBAL_DIR`).
 
 ## Key Files
 
@@ -25,7 +25,7 @@ Single Node.js process that connects to Telegram and WhatsApp, routes messages t
 | `src/config.ts` | Trigger pattern, paths, intervals |
 | `groups/{name}/CLAUDE.md` | Per-group memory and personality (isolated) |
 | `container/agent-runner/src/index.ts` | Agent runtime (Claude SDK, MCP tools) |
-| `skills-engine/` | Skill apply/merge/state engine (NanoClaw compatible) |
+| `skills-engine/` | Skill apply/merge/state engine |
 
 ## Skills
 
@@ -81,22 +81,24 @@ Use the **standard Claude Code pattern**: add to `data/sessions/{group}/.claude/
 }
 ```
 
-The agent-runner reads `mcpServers` from settings.json at startup and merges them with the built-in `nanoclaw` IPC server. `allowedTools` is built dynamically (`mcp__{name}__*` for each server). No code changes needed.
+The agent-runner reads `mcpServers` from settings.json at startup and merges them with the built-in `ghostclaw` IPC server. `allowedTools` is built dynamically (`mcp__{name}__*` for each server). No code changes needed.
 
-For globally-enabled servers (available to all groups), add to `buildGlobalMcpServers()` in `container-runner.ts` — these get synced into every group's settings.json automatically. Only the `nanoclaw` server stays programmatic (needs runtime vars like `NANOCLAW_CHAT_JID`).
+For globally-enabled servers (available to all groups), add to `buildGlobalMcpServers()` in `container-runner.ts` — these get synced into every group's settings.json automatically. Only the `ghostclaw` server stays programmatic (needs runtime vars like `GHOSTCLAW_CHAT_JID`).
 
 ## Security
 
 Skills are scanned before application (`skills-engine/security-scan.ts`). Critical findings block apply. Run `npx tsx scripts/scan-skill.ts --all` to scan all skills.
 
-## NanoClaw Compatibility
+## NanoClaw Heritage
 
-This is a fork. We keep NanoClaw's internal conventions where possible:
-- `.nanoclaw/` state directory (skills engine)
-- `NANOCLAW_*` environment variables (agent runner interface)
-- Skills from the NanoClaw ecosystem apply cleanly
+Originally forked from NanoClaw. The skills engine and `/update-nanoclaw` skill can still cherry-pick upstream changes, but the core architecture has diverged:
+- `.ghostclaw/` state directory (was `.nanoclaw/`)
+- `GHOSTCLAW_*` environment variables (was `NANOCLAW_*`)
+- `mcp__ghostclaw__*` tool names (was `mcp__nanoclaw__*`)
+- No containers — agents run directly on host
+- Settings-based MCP server configuration
 
 When pulling upstream updates, watch for conflicts in:
 - `src/container-runner.ts` (rewritten to spawn node directly)
 - `src/index.ts` (Telegram channel additions)
-- `container/agent-runner/src/` (Gmail MCP integration)
+- `container/agent-runner/src/` (Gmail MCP, settings-based MCP merge)

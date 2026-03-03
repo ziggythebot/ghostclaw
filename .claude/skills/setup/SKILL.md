@@ -155,8 +155,8 @@ Replace `USERNAME` with the actual username (from `whoami`). Run the two `sudo` 
 
 **If SERVICE_LOADED=false:**
 - Read `logs/setup.log` for the error.
-- macOS: check `launchctl list | grep nanoclaw`. If PID=`-` and status non-zero, read `logs/nanoclaw.error.log`.
-- Linux: check `systemctl --user status nanoclaw`.
+- macOS: check `launchctl list | grep ghostclaw`. If PID=`-` and status non-zero, read `logs/ghostclaw.error.log`.
+- Linux: check `systemctl --user status ghostclaw`.
 - Re-run the service step after fixing.
 
 ## 11. Verify
@@ -171,15 +171,15 @@ Run `npx tsx setup/index.ts --step verify` and parse the status block.
 - REGISTERED_GROUPS=0 → re-run steps 7-8
 - MOUNT_ALLOWLIST=missing → `npx tsx setup/index.ts --step mounts -- --empty`
 
-Tell user to test: send a message in their registered chat. Show: `tail -f logs/nanoclaw.log`
+Tell user to test: send a message in their registered chat. Show: `tail -f logs/ghostclaw.log`
 
 ## Troubleshooting
 
-**Service not starting:** Check `logs/nanoclaw.error.log`. Common: wrong Node path (re-run step 10), missing `.env` (step 4), missing auth (step 5).
+**Service not starting:** Check `logs/ghostclaw.error.log`. Common: wrong Node path (re-run step 10), missing `.env` (step 4), missing auth (step 5).
 
 **Container agent fails ("Claude Code process exited with code 1"):** Ensure the container runtime is running — `open -a Docker` (macOS Docker), `container system start` (Apple Container), or `sudo systemctl start docker` (Linux). Check container logs in `groups/main/logs/container-*.log`.
 
-**No response to messages:** Check trigger pattern. Main channel doesn't need prefix. Check DB: `npx tsx setup/index.ts --step verify`. Check `logs/nanoclaw.log`.
+**No response to messages:** Check trigger pattern. Main channel doesn't need prefix. Check DB: `npx tsx setup/index.ts --step verify`. Check `logs/ghostclaw.log`.
 
 **WhatsApp disconnected:** `npm run auth` then rebuild and restart: `npm run build && launchctl kickstart -k gui/$(id -u)/com.ghostclaw` (macOS) or `systemctl --user restart ghostclaw` (Linux).
 

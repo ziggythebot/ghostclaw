@@ -32,7 +32,7 @@ No filler. No "Great question!" No "I'd be happy to help." No emoji unless asked
 
 Output is sent to the user via Telegram (main channel) or WhatsApp (group chats).
 
-`mcp__nanoclaw__send_message` sends a message immediately while you're still working. Useful to acknowledge a request before starting longer work.
+`mcp__ghostclaw__send_message` sends a message immediately while you're still working. Useful to acknowledge a request before starting longer work.
 
 ### Telegram Formatting
 
@@ -71,15 +71,15 @@ Agents run directly on the host (no containers). Key paths:
 
 | Environment Variable | Path | Access |
 |---------------------|------|--------|
-| `NANOCLAW_GROUP_DIR` | `groups/main/` | read-write |
-| `NANOCLAW_IPC_DIR` | IPC directory | read-write |
-| `NANOCLAW_GLOBAL_DIR` | Project root | read-only |
+| `GHOSTCLAW_GROUP_DIR` | `groups/main/` | read-write |
+| `GHOSTCLAW_IPC_DIR` | IPC directory | read-write |
+| `GHOSTCLAW_GLOBAL_DIR` | Project root | read-only |
 
 Key paths:
-- `$NANOCLAW_GLOBAL_DIR/store/messages.db` - SQLite database
-- `$NANOCLAW_GLOBAL_DIR/groups/` - All group folders
-- `$NANOCLAW_IPC_DIR/available_groups.json` - Discovered groups
-- `$NANOCLAW_IPC_DIR/tasks/` - IPC task files
+- `$GHOSTCLAW_GLOBAL_DIR/store/messages.db` - SQLite database
+- `$GHOSTCLAW_GLOBAL_DIR/groups/` - All group folders
+- `$GHOSTCLAW_IPC_DIR/available_groups.json` - Discovered groups
+- `$GHOSTCLAW_IPC_DIR/tasks/` - IPC task files
 
 ---
 
@@ -87,7 +87,7 @@ Key paths:
 
 ### Finding Available Groups
 
-Available groups are provided in `$NANOCLAW_IPC_DIR/available_groups.json`:
+Available groups are provided in `$GHOSTCLAW_IPC_DIR/available_groups.json`:
 
 ```json
 {
@@ -108,7 +108,7 @@ Groups are ordered by most recent activity. The list is synced from WhatsApp dai
 If a group the user mentions isn't in the list, request a fresh sync:
 
 ```bash
-echo '{"type": "refresh_groups"}' > $NANOCLAW_IPC_DIR/tasks/refresh_$(date +%s).json
+echo '{"type": "refresh_groups"}' > $GHOSTCLAW_IPC_DIR/tasks/refresh_$(date +%s).json
 ```
 
 Then wait a moment and re-read `available_groups.json`.
@@ -116,7 +116,7 @@ Then wait a moment and re-read `available_groups.json`.
 **Fallback**: Query the SQLite database directly:
 
 ```bash
-sqlite3 $NANOCLAW_GLOBAL_DIR/store/messages.db "
+sqlite3 $GHOSTCLAW_GLOBAL_DIR/store/messages.db "
   SELECT jid, name, last_message_time
   FROM chats
   WHERE jid LIKE '%@g.us' AND jid != '__group_sync__'
@@ -130,7 +130,7 @@ sqlite3 $NANOCLAW_GLOBAL_DIR/store/messages.db "
 Write an IPC task file:
 
 ```bash
-cat > $NANOCLAW_IPC_DIR/tasks/register_$(date +%s).json << 'EOF'
+cat > $GHOSTCLAW_IPC_DIR/tasks/register_$(date +%s).json << 'EOF'
 {
   "type": "register_group",
   "jid": "THE_GROUP_JID",
@@ -162,7 +162,7 @@ Fields:
 Use IPC to schedule tasks:
 
 ```bash
-cat > $NANOCLAW_IPC_DIR/tasks/schedule_$(date +%s).json << 'EOF'
+cat > $GHOSTCLAW_IPC_DIR/tasks/schedule_$(date +%s).json << 'EOF'
 {
   "type": "schedule_task",
   "prompt": "Check the weather and send a morning briefing",
@@ -178,4 +178,4 @@ For tasks targeting other groups, add `target_group_jid`.
 
 ## Global Memory
 
-You can read and write to `$NANOCLAW_GLOBAL_DIR/groups/global/CLAUDE.md` for facts that should apply to all groups. Only update global memory when explicitly asked to "remember this globally" or similar.
+You can read and write to `$GHOSTCLAW_GLOBAL_DIR/groups/global/CLAUDE.md` for facts that should apply to all groups. Only update global memory when explicitly asked to "remember this globally" or similar.

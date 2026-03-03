@@ -30,8 +30,8 @@ src/container-runner.ts               container/agent-runner/
 
 | Log | Location | Content |
 |-----|----------|---------|
-| **Main app logs** | `logs/nanoclaw.log` | Host-side WhatsApp, routing, container spawning |
-| **Main app errors** | `logs/nanoclaw.error.log` | Host-side errors |
+| **Main app logs** | `logs/ghostclaw.log` | Host-side WhatsApp, routing, container spawning |
+| **Main app errors** | `logs/ghostclaw.error.log` | Host-side errors |
 | **Container run logs** | `groups/{folder}/logs/container-*.log` | Per-run: input, mounts, stderr, stdout |
 | **Claude sessions** | `~/.claude/projects/` | Claude Code session history |
 
@@ -90,7 +90,7 @@ To verify env vars are reaching the container:
 ```bash
 echo '{}' | docker run -i \
   -v $(pwd)/data/env:/workspace/env-dir:ro \
-  --entrypoint /bin/bash nanoclaw-agent:latest \
+  --entrypoint /bin/bash ghostclaw-agent:latest \
   -c 'export $(cat /workspace/env-dir/env | xargs); echo "OAuth: ${#CLAUDE_CODE_OAUTH_TOKEN} chars, API: ${#ANTHROPIC_API_KEY} chars"'
 ```
 
@@ -109,7 +109,7 @@ echo '{}' | docker run -i \
 
 To check what's mounted inside a container:
 ```bash
-docker run --rm --entrypoint /bin/bash nanoclaw-agent:latest -c 'ls -la /workspace/'
+docker run --rm --entrypoint /bin/bash ghostclaw-agent:latest -c 'ls -la /workspace/'
 ```
 
 Expected structure:
@@ -131,7 +131,7 @@ Expected structure:
 
 The container runs as user `node` (uid 1000). Check ownership:
 ```bash
-docker run --rm --entrypoint /bin/bash nanoclaw-agent:latest -c '
+docker run --rm --entrypoint /bin/bash ghostclaw-agent:latest -c '
   whoami
   ls -la /workspace/
   ls -la /app/
@@ -156,7 +156,7 @@ grep -A3 "Claude sessions" src/container-runner.ts
 ```bash
 docker run --rm --entrypoint /bin/bash \
   -v ~/.claude:/home/node/.claude \
-  nanoclaw-agent:latest -c '
+  ghostclaw-agent:latest -c '
 echo "HOME=$HOME"
 ls -la $HOME/.claude/projects/ 2>&1 | head -5
 '
@@ -189,14 +189,14 @@ echo '{"prompt":"What is 2+2?","groupFolder":"test","chatJid":"test@g.us","isMai
   -v $(pwd)/data/env:/workspace/env-dir:ro \
   -v $(pwd)/groups/test:/workspace/group \
   -v $(pwd)/data/ipc:/workspace/ipc \
-  nanoclaw-agent:latest
+  ghostclaw-agent:latest
 ```
 
 ### Test Claude Code directly:
 ```bash
 docker run --rm --entrypoint /bin/bash \
   -v $(pwd)/data/env:/workspace/env-dir:ro \
-  nanoclaw-agent:latest -c '
+  ghostclaw-agent:latest -c '
   export $(cat /workspace/env-dir/env | xargs)
   claude -p "Say hello" --dangerously-skip-permissions --allowedTools ""
 '
@@ -204,7 +204,7 @@ docker run --rm --entrypoint /bin/bash \
 
 ### Interactive shell in container:
 ```bash
-docker run --rm -it --entrypoint /bin/bash nanoclaw-agent:latest
+docker run --rm -it --entrypoint /bin/bash ghostclaw-agent:latest
 ```
 
 ## SDK Options Reference
@@ -248,7 +248,7 @@ docker builder prune -af
 docker images
 
 # Check what's in the image
-docker run --rm --entrypoint /bin/bash nanoclaw-agent:latest -c '
+docker run --rm --entrypoint /bin/bash ghostclaw-agent:latest -c '
   echo "=== Node version ==="
   node --version
 
@@ -284,7 +284,7 @@ sqlite3 store/messages.db "DELETE FROM sessions WHERE group_folder = '{groupFold
 
 To verify session resumption is working, check the logs for the same session ID across messages:
 ```bash
-grep "Session initialized" logs/nanoclaw.log | tail -5
+grep "Session initialized" logs/ghostclaw.log | tail -5
 # Should show the SAME session ID for consecutive messages in the same group
 ```
 
@@ -332,7 +332,7 @@ echo -e "\n3. Container runtime running?"
 docker info &>/dev/null && echo "OK" || echo "NOT RUNNING - start Docker Desktop (macOS) or sudo systemctl start docker (Linux)"
 
 echo -e "\n4. Container image exists?"
-echo '{}' | docker run -i --entrypoint /bin/echo nanoclaw-agent:latest "OK" 2>/dev/null || echo "MISSING - run ./container/build.sh"
+echo '{}' | docker run -i --entrypoint /bin/echo ghostclaw-agent:latest "OK" 2>/dev/null || echo "MISSING - run ./container/build.sh"
 
 echo -e "\n5. Session mount path correct?"
 grep -q "/home/node/.claude" src/container-runner.ts 2>/dev/null && echo "OK" || echo "WRONG - should mount to /home/node/.claude/, not /root/.claude/"
@@ -344,6 +344,6 @@ echo -e "\n7. Recent container logs?"
 ls -t groups/*/logs/container-*.log 2>/dev/null | head -3 || echo "No container logs yet"
 
 echo -e "\n8. Session continuity working?"
-SESSIONS=$(grep "Session initialized" logs/nanoclaw.log 2>/dev/null | tail -5 | awk '{print $NF}' | sort -u | wc -l)
+SESSIONS=$(grep "Session initialized" logs/ghostclaw.log 2>/dev/null | tail -5 | awk '{print $NF}' | sort -u | wc -l)
 [ "$SESSIONS" -le 2 ] && echo "OK (recent sessions reusing IDs)" || echo "CHECK - multiple different session IDs, may indicate resumption issues"
 ```

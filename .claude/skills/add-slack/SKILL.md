@@ -11,7 +11,7 @@ This skill adds Slack support to NanoClaw using the skills engine for determinis
 
 ### Check if already applied
 
-Read `.nanoclaw/state.yaml`. If `slack` is in `applied_skills`, skip to Phase 3 (Setup). The code changes are already in place.
+Read `.ghostclaw/state.yaml`. If `slack` is in `applied_skills`, skip to Phase 3 (Setup). The code changes are already in place.
 
 ### Ask the user
 
@@ -27,7 +27,7 @@ Run the skills engine to apply this skill's code package. The package files are 
 
 ### Initialize skills system (if needed)
 
-If `.nanoclaw/` directory doesn't exist yet:
+If `.ghostclaw/` directory doesn't exist yet:
 
 ```bash
 npx tsx scripts/apply-skill.ts --init
@@ -49,7 +49,7 @@ This deterministically:
 - Three-way merges updated routing tests into `src/routing.test.ts`
 - Installs the `@slack/bolt` npm dependency
 - Updates `.env.example` with `SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`, and `SLACK_ONLY`
-- Records the application in `.nanoclaw/state.yaml`
+- Records the application in `.ghostclaw/state.yaml`
 
 If the apply reports merge conflicts, read the intent files:
 - `modify/src/index.ts.intent.md` — what changed and invariants for index.ts
@@ -167,7 +167,7 @@ Tell the user:
 ### Check logs if needed
 
 ```bash
-tail -f logs/nanoclaw.log
+tail -f logs/ghostclaw.log
 ```
 
 ## Troubleshooting
@@ -177,7 +177,7 @@ tail -f logs/nanoclaw.log
 1. Check `SLACK_BOT_TOKEN` and `SLACK_APP_TOKEN` are set in `.env` AND synced to `data/env/env`
 2. Check channel is registered: `sqlite3 store/messages.db "SELECT * FROM registered_groups WHERE jid LIKE 'slack:%'"`
 3. For non-main channels: message must include trigger pattern
-4. Service is running: `launchctl list | grep nanoclaw`
+4. Service is running: `launchctl list | grep ghostclaw`
 
 ### Bot connected but not receiving messages
 

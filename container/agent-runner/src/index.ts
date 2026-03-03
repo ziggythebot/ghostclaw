@@ -1,5 +1,5 @@
 /**
- * NanoClaw Agent Runner
+ * GhostClaw Agent Runner
  * Runs inside a container, receives config via stdin, outputs result to stdout
  *
  * Input protocol:
@@ -55,7 +55,7 @@ interface SDKUserMessage {
   session_id: string;
 }
 
-const IPC_BASE = process.env.NANOCLAW_IPC_DIR || '/workspace/ipc';
+const IPC_BASE = process.env.GHOSTCLAW_IPC_DIR || '/workspace/ipc';
 const IPC_INPUT_DIR = path.join(IPC_BASE, 'input');
 const IPC_INPUT_CLOSE_SENTINEL = path.join(IPC_INPUT_DIR, '_close');
 const IPC_POLL_MS = 500;
@@ -106,8 +106,8 @@ async function readStdin(): Promise<string> {
   });
 }
 
-const OUTPUT_START_MARKER = '---NANOCLAW_OUTPUT_START---';
-const OUTPUT_END_MARKER = '---NANOCLAW_OUTPUT_END---';
+const OUTPUT_START_MARKER = '---GHOSTCLAW_OUTPUT_START---';
+const OUTPUT_END_MARKER = '---GHOSTCLAW_OUTPUT_END---';
 
 function writeOutput(output: ContainerOutput): void {
   console.log(OUTPUT_START_MARKER);
@@ -167,7 +167,7 @@ function createPreCompactHook(assistantName?: string): HookCallback {
       const summary = getSessionSummary(sessionId, transcriptPath);
       const name = summary ? sanitizeFilename(summary) : generateFallbackName();
 
-      const groupDir = process.env.NANOCLAW_GROUP_DIR || '/workspace/group';
+      const groupDir = process.env.GHOSTCLAW_GROUP_DIR || '/workspace/group';
       const conversationsDir = path.join(groupDir, 'conversations');
       fs.mkdirSync(conversationsDir, { recursive: true });
 
@@ -357,7 +357,7 @@ function waitForIpcMessage(): Promise<string | null> {
  * Also pipes IPC messages into the stream during the query.
  */
 // Names reserved for programmatic servers — cannot be overridden via settings.json.
-const RESERVED_MCP_NAMES = new Set(['nanoclaw']);
+const RESERVED_MCP_NAMES = new Set(['ghostclaw']);
 
 // Validate that a key is a safe MCP server name (alphanumeric, hyphens, underscores).
 const VALID_MCP_NAME = /^[a-zA-Z0-9_-]+$/;
@@ -437,8 +437,8 @@ async function runQuery(
   let resultCount = 0;
 
   // Load global CLAUDE.md as additional system context (shared across all groups)
-  const globalClaudeMdPath = process.env.NANOCLAW_GLOBAL_DIR
-    ? path.join(process.env.NANOCLAW_GLOBAL_DIR, 'CLAUDE.md')
+  const globalClaudeMdPath = process.env.GHOSTCLAW_GLOBAL_DIR
+    ? path.join(process.env.GHOSTCLAW_GLOBAL_DIR, 'CLAUDE.md')
     : '/workspace/global/CLAUDE.md';
   let globalClaudeMd: string | undefined;
   if (!containerInput.isMain && fs.existsSync(globalClaudeMdPath)) {
@@ -447,7 +447,7 @@ async function runQuery(
 
   // Discover additional directories for CLAUDE.md loading
   const extraDirs: string[] = [];
-  const extraBase = process.env.NANOCLAW_EXTRA_DIR || '/workspace/extra';
+  const extraBase = process.env.GHOSTCLAW_EXTRA_DIR || '/workspace/extra';
   if (fs.existsSync(extraBase)) {
     for (const entry of fs.readdirSync(extraBase)) {
       const fullPath = path.join(extraBase, entry);
@@ -464,15 +464,15 @@ async function runQuery(
   // Skills and agents add servers by editing settings.json — they're picked up here.
   const settingsMcpServers = loadSettingsMcpServers();
   const allMcpServers: Record<string, unknown> = {
-    // Settings-based servers first, then nanoclaw last (cannot be overridden)
+    // Settings-based servers first, then ghostclaw last (cannot be overridden)
     ...settingsMcpServers,
-    nanoclaw: {
+    ghostclaw: {
       command: 'node',
       args: [mcpServerPath],
       env: {
-        NANOCLAW_CHAT_JID: containerInput.chatJid,
-        NANOCLAW_GROUP_FOLDER: containerInput.groupFolder,
-        NANOCLAW_IS_MAIN: containerInput.isMain ? '1' : '0',
+        GHOSTCLAW_CHAT_JID: containerInput.chatJid,
+        GHOSTCLAW_GROUP_FOLDER: containerInput.groupFolder,
+        GHOSTCLAW_IS_MAIN: containerInput.isMain ? '1' : '0',
       },
     },
   };
@@ -489,7 +489,7 @@ async function runQuery(
     ...Object.keys(allMcpServers).map((name) => `mcp__${name}__*`),
   ];
 
-  const cwd = process.env.NANOCLAW_GROUP_DIR || '/workspace/group';
+  const cwd = process.env.GHOSTCLAW_GROUP_DIR || '/workspace/group';
   for await (const message of query({
     prompt: stream,
     options: {

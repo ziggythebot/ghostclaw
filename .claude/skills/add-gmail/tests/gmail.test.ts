@@ -6,9 +6,9 @@ const root = process.cwd();
 const read = (f: string) => fs.readFileSync(path.join(root, f), 'utf-8');
 
 function getGmailMode(): 'tool-only' | 'channel' {
-  const p = path.join(root, '.nanoclaw/state.yaml');
+  const p = path.join(root, '.ghostclaw/state.yaml');
   if (!fs.existsSync(p)) return 'channel';
-  return read('.nanoclaw/state.yaml').includes('mode: tool-only') ? 'tool-only' : 'channel';
+  return read('.ghostclaw/state.yaml').includes('mode: tool-only') ? 'tool-only' : 'channel';
 }
 
 const mode = getGmailMode();

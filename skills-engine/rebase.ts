@@ -166,7 +166,7 @@ export async function rebase(newBasePath?: string): Promise<RebaseResult> {
           // Find old base content from backup
           const oldBasePath = path.join(
             projectRoot,
-            '.nanoclaw',
+            '.ghostclaw',
             'backup',
             BASE_DIR,
             relPath,
@@ -180,7 +180,7 @@ export async function rebase(newBasePath?: string): Promise<RebaseResult> {
           // Three-way merge: current(new base) ← old-base → saved(modifications)
           const tmpSaved = path.join(
             os.tmpdir(),
-            `nanoclaw-rebase-${crypto.randomUUID()}-${path.basename(relPath)}`,
+            `ghostclaw-rebase-${crypto.randomUUID()}-${path.basename(relPath)}`,
           );
           fs.writeFileSync(tmpSaved, saved);
 

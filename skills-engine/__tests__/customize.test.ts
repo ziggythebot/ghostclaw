@@ -122,7 +122,7 @@ describe('customize', () => {
     // Make the base file a directory to cause diff to exit with code 2
     const baseFilePath = path.join(
       tmpDir,
-      '.nanoclaw',
+      '.ghostclaw',
       'base',
       'src',
       'app.ts',

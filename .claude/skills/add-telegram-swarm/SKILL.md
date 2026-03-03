@@ -276,7 +276,7 @@ Create *exactly* the team the user asked for — same number of agents, same rol
 
 Each team member MUST be instructed to:
 
-1. *Share progress in the group* via `mcp__nanoclaw__send_message` with a `sender` parameter matching their exact role/character name (e.g., `sender: "Marine Biologist"` or `sender: "Alexander Hamilton"`). This makes their messages appear from a dedicated bot in the Telegram group.
+1. *Share progress in the group* via `mcp__ghostclaw__send_message` with a `sender` parameter matching their exact role/character name (e.g., `sender: "Marine Biologist"` or `sender: "Alexander Hamilton"`). This makes their messages appear from a dedicated bot in the Telegram group.
 2. *Also communicate with teammates* via `SendMessage` as normal for coordination.
 3. Keep group messages *short* — 2-4 sentences max per message. Break longer content into multiple `send_message` calls. No walls of text.
 4. Use the `sender` parameter consistently — always the same name so the bot identity stays stable.
@@ -287,7 +287,7 @@ Each team member MUST be instructed to:
 When creating a teammate, include instructions like:
 
 \```
-You are the Marine Biologist. When you have findings or updates for the user, send them to the group using mcp__nanoclaw__send_message with sender set to "Marine Biologist". Keep each message short (2-4 sentences max). Use emojis for strong reactions. ONLY use single *asterisks* for bold (never **double**), _underscores_ for italic, • for bullets. No markdown. Also communicate with teammates via SendMessage.
+You are the Marine Biologist. When you have findings or updates for the user, send them to the group using mcp__ghostclaw__send_message with sender set to "Marine Biologist". Keep each message short (2-4 sentences max). Use emojis for strong reactions. ONLY use single *asterisks* for bold (never **double**), _underscores_ for italic, • for bullets. No markdown. Also communicate with teammates via SendMessage.
 \```
 
 ### Lead agent behavior
@@ -342,7 +342,7 @@ Tell the user:
 > - Each subagent messaging from a different bot, renamed to their role
 > - Short, scannable messages from each agent
 >
-> Check logs: `tail -f logs/nanoclaw.log | grep -i pool`
+> Check logs: `tail -f logs/ghostclaw.log | grep -i pool`
 
 ## Architecture Notes
 
@@ -358,7 +358,7 @@ Tell the user:
 ### Pool bots not sending messages
 
 1. Verify tokens: `curl -s "https://api.telegram.org/botTOKEN/getMe"`
-2. Check pool initialized: `grep "Pool bot" logs/nanoclaw.log`
+2. Check pool initialized: `grep "Pool bot" logs/ghostclaw.log`
 3. Ensure all pool bots are members of the Telegram group
 4. Check Group Privacy is disabled for each pool bot
 

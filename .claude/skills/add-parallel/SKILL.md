@@ -83,14 +83,14 @@ Update `container/agent-runner/src/index.ts`:
 Find the section where `mcpServers` is configured (around line 237-252):
 ```typescript
 const mcpServers: Record<string, any> = {
-  nanoclaw: ipcMcp
+  ghostclaw: ipcMcp
 };
 ```
 
 Add Parallel AI MCP servers after the nanoclaw server:
 ```typescript
 const mcpServers: Record<string, any> = {
-  nanoclaw: ipcMcp
+  ghostclaw: ipcMcp
 };
 
 // Add Parallel AI MCP servers if API key is available
@@ -122,7 +122,7 @@ allowedTools: [
   'Bash',
   'Read', 'Write', 'Edit', 'Glob', 'Grep',
   'WebSearch', 'WebFetch',
-  'mcp__nanoclaw__*',
+  'mcp__ghostclaw__*',
   'mcp__parallel-search__*',
   'mcp__parallel-task__*'
 ],
@@ -178,14 +178,14 @@ AskUserQuestion: I can do deep research on [topic] using Parallel's Task API. Th
 
 1. Create the task using `mcp__parallel-task__create_task_run`
 2. Get the `run_id` from the response
-3. Create a polling scheduled task using `mcp__nanoclaw__schedule_task`:
+3. Create a polling scheduled task using `mcp__ghostclaw__schedule_task`:
    ```
    Prompt: "Check Parallel AI task run [run_id] and send results when ready.
 
    1. Use the Parallel Task MCP to check the task status
    2. If status is 'completed', extract the results
-   3. Send results to user with mcp__nanoclaw__send_message
-   4. Use mcp__nanoclaw__complete_scheduled_task to mark this task as done
+   3. Send results to user with mcp__ghostclaw__send_message
+   4. Use mcp__ghostclaw__complete_scheduled_task to mark this task as done
 
    If status is still 'running' or 'pending', do nothing (task will run again in 30s).
    If status is 'failed', send error message and complete the task."
@@ -224,7 +224,7 @@ Build the container with updated agent runner:
 
 Verify the build:
 ```bash
-echo '{}' | docker run -i --entrypoint /bin/echo nanoclaw-agent:latest "Container OK"
+echo '{}' | docker run -i --entrypoint /bin/echo ghostclaw-agent:latest "Container OK"
 ```
 
 ### 7. Restart Service
@@ -240,8 +240,8 @@ launchctl kickstart -k gui/$(id -u)/com.ghostclaw  # macOS
 Wait 3 seconds for service to start, then verify:
 ```bash
 sleep 3
-launchctl list | grep nanoclaw  # macOS
-# Linux: systemctl --user status nanoclaw
+launchctl list | grep ghostclaw  # macOS
+# Linux: systemctl --user status ghostclaw
 ```
 
 ### 8. Test Integration
@@ -257,7 +257,7 @@ Tell the user to test:
 
 Check logs to verify MCP servers loaded:
 ```bash
-tail -20 logs/nanoclaw.log
+tail -20 logs/ghostclaw.log
 ```
 
 Look for: `Parallel AI MCP servers configured`
@@ -276,7 +276,7 @@ Look for: `Parallel AI MCP servers configured`
 
 **Task polling not working:**
 - Verify scheduled task was created: `sqlite3 store/messages.db "SELECT * FROM scheduled_tasks"`
-- Check task runs: `tail -f logs/nanoclaw.log | grep "scheduled task"`
+- Check task runs: `tail -f logs/ghostclaw.log | grep "scheduled task"`
 - Ensure task prompt includes proper Parallel MCP tool names
 
 ## Uninstalling

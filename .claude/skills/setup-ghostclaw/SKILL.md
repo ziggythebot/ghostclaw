@@ -228,7 +228,7 @@ mkdir -p data/ipc/main/tasks
 cat > "data/ipc/main/tasks/heartbeat_$(date +%s).json" << 'EOF'
 {
   "type": "schedule_task",
-  "prompt": "Read $NANOCLAW_GROUP_DIR/HEARTBEAT.md (or ./HEARTBEAT.md in the current directory) and run each check listed. Only message the user if something needs attention. If everything is fine, respond with <internal>All checks passed</internal> and nothing else.",
+  "prompt": "Read $GHOSTCLAW_GROUP_DIR/HEARTBEAT.md (or ./HEARTBEAT.md in the current directory) and run each check listed. Only message the user if something needs attention. If everything is fine, respond with <internal>All checks passed</internal> and nothing else.",
   "schedule_type": "cron",
   "schedule_value": "*/30 * * * *",
   "context_mode": "isolated"

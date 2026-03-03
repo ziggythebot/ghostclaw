@@ -177,7 +177,7 @@ export async function replaySkills(
 
         const tmpCurrent = path.join(
           os.tmpdir(),
-          `nanoclaw-replay-${crypto.randomUUID()}-${path.basename(relPath)}`,
+          `ghostclaw-replay-${crypto.randomUUID()}-${path.basename(relPath)}`,
         );
         fs.copyFileSync(currentPath, tmpCurrent);
 
