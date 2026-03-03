@@ -170,6 +170,12 @@ export async function processTaskIpc(
     trigger?: string;
     requiresTrigger?: boolean;
     containerConfig?: RegisteredGroup['containerConfig'];
+    // For ralph
+    taskFile?: string;
+    workDir?: string;
+    maxIterations?: number;
+    notifyProgress?: boolean;
+    runId?: string;
   },
   sourceGroup: string, // Verified identity from IPC directory
   isMain: boolean, // Verified from directory path
@@ -378,6 +384,80 @@ export async function processTaskIpc(
           { data },
           'Invalid register_group request - missing required fields',
         );
+      }
+      break;
+
+    case 'start_ralph':
+      if (!isMain) {
+        logger.warn({ sourceGroup }, 'Unauthorized start_ralph attempt blocked');
+        break;
+      }
+      if (data.taskFile && data.targetJid) {
+        try {
+          const { startRalphRun } = await import('./ralph-runner.js');
+          const { createTask: createTaskFn } = await import('./db.js');
+          const ralphRunId = await startRalphRun(
+            {
+              taskFilePath: data.taskFile,
+              workDir: data.workDir || process.cwd(),
+              targetJid: data.targetJid,
+              groupFolder: sourceGroup,
+              maxIterations: data.maxIterations,
+              notifyProgress: data.notifyProgress,
+            },
+            {
+              createTask: createTaskFn,
+              sendMessage: deps.sendMessage,
+              readFile: (p: string) => fs.readFileSync(p, 'utf-8'),
+              writeFile: (p: string, c: string) => fs.writeFileSync(p, c),
+              mkdirSync: (p: string, opts?) => fs.mkdirSync(p, opts),
+              existsSync: (p: string) => fs.existsSync(p),
+              now: () => new Date().toISOString(),
+            },
+          );
+          await deps.sendMessage(
+            data.targetJid,
+            `Ralph run started: ${ralphRunId}`,
+          );
+          logger.info({ runId: ralphRunId, sourceGroup }, 'Ralph run started via IPC');
+        } catch (err) {
+          logger.error({ err, sourceGroup }, 'Failed to start ralph run');
+          if (data.targetJid) {
+            await deps.sendMessage(
+              data.targetJid,
+              `Failed to start Ralph: ${err instanceof Error ? err.message : String(err)}`,
+            );
+          }
+        }
+      } else {
+        logger.warn({ sourceGroup }, 'start_ralph missing taskFile or targetJid');
+      }
+      break;
+
+    case 'stop_ralph':
+      if (!isMain) {
+        logger.warn({ sourceGroup }, 'Unauthorized stop_ralph attempt blocked');
+        break;
+      }
+      if (data.runId) {
+        try {
+          const { stopRalphRun } = await import('./ralph-runner.js');
+          stopRalphRun(data.runId, {
+            createTask: () => {},
+            sendMessage: deps.sendMessage,
+            readFile: (p: string) => fs.readFileSync(p, 'utf-8'),
+            writeFile: (p: string, c: string) => fs.writeFileSync(p, c),
+            mkdirSync: (p: string, opts?) => fs.mkdirSync(p, opts),
+            existsSync: (p: string) => fs.existsSync(p),
+            now: () => new Date().toISOString(),
+          });
+          if (data.targetJid) {
+            await deps.sendMessage(data.targetJid, `Ralph run stopped: ${data.runId}`);
+          }
+          logger.info({ runId: data.runId }, 'Ralph run stopped via IPC');
+        } catch (err) {
+          logger.error({ runId: data.runId, err }, 'Failed to stop ralph run');
+        }
       }
       break;
 

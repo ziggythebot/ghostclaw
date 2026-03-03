@@ -2,6 +2,8 @@ import { ChildProcess } from 'child_process';
 import { CronExpressionParser } from 'cron-parser';
 import fs from 'fs';
 
+import { parseRalphPrefix } from './ralph.js';
+
 import {
   ASSISTANT_NAME,
   MAIN_GROUP_FOLDER,
@@ -210,6 +212,33 @@ async function runTask(
       ? result.slice(0, 200)
       : 'Completed';
   updateTaskAfterRun(task.id, nextRun, resultSummary);
+
+  // Check if this was a Ralph iteration and chain the next one
+  const ralphInfo = parseRalphPrefix(task.prompt);
+  if (ralphInfo) {
+    try {
+      const { onIterationComplete } = await import('./ralph-runner.js');
+      const { createTask } = await import('./db.js');
+      await onIterationComplete(
+        ralphInfo.runId,
+        ralphInfo.iteration,
+        result || '',
+        !error,
+        durationMs,
+        {
+          createTask,
+          sendMessage: deps.sendMessage,
+          readFile: (p: string) => fs.readFileSync(p, 'utf-8'),
+          writeFile: (p: string, c: string) => fs.writeFileSync(p, c),
+          mkdirSync: (p: string, opts?) => fs.mkdirSync(p, opts),
+          existsSync: (p: string) => fs.existsSync(p),
+          now: () => new Date().toISOString(),
+        },
+      );
+    } catch (err) {
+      logger.error({ runId: ralphInfo.runId, err }, 'Ralph iteration callback failed');
+    }
+  }
 }
 
 let schedulerRunning = false;

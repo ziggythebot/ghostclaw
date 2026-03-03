@@ -280,6 +280,79 @@ Use available_groups.json to find the JID for a group. The folder name should be
   },
 );
 
+server.tool(
+  'start_ralph',
+  `Start a Ralph autonomous task loop. Reads a markdown task file (with checkboxes) and runs each task in sequence — one per fresh agent session. Commits after each task, messages progress between iterations.
+
+The task file should contain markdown checkboxes like:
+- [ ] Create user model
+- [ ] Add login endpoint
+- [ ] Add registration endpoint
+
+Each task runs in a fresh context window. Already-checked [x] items are skipped. The loop stops when all tasks are done or max iterations is reached.
+
+Main group only.`,
+  {
+    task_file: z.string().describe('Absolute path to the markdown task file with checkboxes'),
+    work_dir: z.string().describe('Absolute path to the project directory where the agent should work'),
+    max_iterations: z.number().optional().describe('Maximum iterations before stopping (default: 50)'),
+    notify_progress: z.boolean().optional().describe('Send progress messages between iterations (default: true)'),
+  },
+  async (args) => {
+    if (!isMain) {
+      return {
+        content: [{ type: 'text' as const, text: 'Only the main group can start Ralph runs.' }],
+        isError: true,
+      };
+    }
+
+    const data = {
+      type: 'start_ralph',
+      taskFile: args.task_file,
+      workDir: args.work_dir,
+      targetJid: chatJid,
+      maxIterations: args.max_iterations,
+      notifyProgress: args.notify_progress,
+      timestamp: new Date().toISOString(),
+    };
+
+    writeIpcFile(TASKS_DIR, data);
+
+    return {
+      content: [{ type: 'text' as const, text: `Ralph run requested for task file: ${args.task_file}` }],
+    };
+  },
+);
+
+server.tool(
+  'stop_ralph',
+  'Stop a running Ralph autonomous task loop. The current iteration will finish but no more will be scheduled. Main group only.',
+  {
+    run_id: z.string().describe('The Ralph run ID (e.g., "ralph-1234567890-abc123")'),
+  },
+  async (args) => {
+    if (!isMain) {
+      return {
+        content: [{ type: 'text' as const, text: 'Only the main group can stop Ralph runs.' }],
+        isError: true,
+      };
+    }
+
+    const data = {
+      type: 'stop_ralph',
+      runId: args.run_id,
+      targetJid: chatJid,
+      timestamp: new Date().toISOString(),
+    };
+
+    writeIpcFile(TASKS_DIR, data);
+
+    return {
+      content: [{ type: 'text' as const, text: `Ralph stop requested for run: ${args.run_id}` }],
+    };
+  },
+);
+
 // Start the stdio transport
 const transport = new StdioServerTransport();
 await server.connect(transport);
