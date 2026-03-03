@@ -12,6 +12,7 @@ import {
 } from './config.js';
 import { TelegramChannel } from './channels/telegram.js';
 import { WhatsAppChannel } from './channels/whatsapp.js';
+import { initErrorAlerts, sendErrorAlert } from './error-alerts.js';
 import {
   ContainerOutput,
   runContainerAgent,
@@ -485,6 +486,19 @@ async function main(): Promise<void> {
     whatsapp = new WhatsAppChannel(channelOpts);
     channels.push(whatsapp);
     await whatsapp.connect();
+  }
+
+  // Initialize error alerts for main group
+  const mainGroupJid = Object.keys(registeredGroups).find(
+    (jid) => registeredGroups[jid].folder === MAIN_GROUP_FOLDER,
+  );
+  if (mainGroupJid) {
+    const sendMessageToAdmin = async (jid: string, text: string) => {
+      const channel = findChannel(channels, jid);
+      if (!channel) return;
+      await channel.sendMessage(jid, text);
+    };
+    initErrorAlerts(sendMessageToAdmin, mainGroupJid);
   }
 
   // Start subsystems (independently of connection handler)

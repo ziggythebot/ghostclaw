@@ -220,9 +220,7 @@ describe('markdownToTelegramHtml', () => {
 
   it('converts fenced code blocks', () => {
     const md = '```js\nconsole.log("hi")\n```';
-    expect(markdownToTelegramHtml(md)).toBe(
-      '<pre>console.log("hi")</pre>',
-    );
+    expect(markdownToTelegramHtml(md)).toBe('<pre>console.log("hi")</pre>');
   });
 
   it('converts links', () => {

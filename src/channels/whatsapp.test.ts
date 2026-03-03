@@ -47,12 +47,8 @@ vi.mock('child_process', () => ({
 
 // Mock transcription — avoid real HTTP calls and env-dependent behavior
 vi.mock('../transcription.js', () => ({
-  transcribeAudioMessage: vi
-    .fn()
-    .mockResolvedValue('Hello from a voice note'),
-  isVoiceMessage: vi.fn(
-    (msg: any) => msg.message?.audioMessage?.ptt === true,
-  ),
+  transcribeAudioMessage: vi.fn().mockResolvedValue('Hello from a voice note'),
+  isVoiceMessage: vi.fn((msg: any) => msg.message?.audioMessage?.ptt === true),
   textToSpeech: vi.fn().mockResolvedValue(null),
 }));
 

@@ -77,22 +77,19 @@ export function markdownToTelegramHtml(md: string): string {
   text = text.replace(/~~(.+?)~~/g, '<s>$1</s>');
 
   // Links: [text](url)
-  text = text.replace(
-    /\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a href="$2">$1</a>',
-  );
+  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
 
   // Restore placeholders
-  text = text.replace(/\x00(\d+)\x00/g, (_m, idx) => placeholders[parseInt(idx)]);
+  text = text.replace(
+    /\x00(\d+)\x00/g,
+    (_m, idx) => placeholders[parseInt(idx)],
+  );
 
   return text;
 }
 
 function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 export function routeOutbound(
