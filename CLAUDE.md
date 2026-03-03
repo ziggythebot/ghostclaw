@@ -18,6 +18,8 @@ Single Node.js process that connects to Telegram and WhatsApp, routes messages t
 | `src/container-runner.ts` | Spawns agent as direct Node.js processes |
 | `src/transcription.ts` | Voice message transcription via OpenAI Whisper |
 | `src/task-scheduler.ts` | Cron and one-shot scheduled tasks |
+| `src/ralph.ts` | Ralph loop pure functions (task parsing, prompts) |
+| `src/ralph-runner.ts` | Ralph loop orchestration (start, iterate, stop) |
 | `src/ipc.ts` | IPC watcher and task processing |
 | `src/db.ts` | SQLite operations |
 | `src/config.ts` | Trigger pattern, paths, intervals |
@@ -55,6 +57,23 @@ systemctl --user start ghostclaw
 systemctl --user stop ghostclaw
 systemctl --user restart ghostclaw
 ```
+
+## Agent Environment Model
+
+Agents run as child processes with the **real HOME** (`/Users/ziggy`). Session isolation uses `CLAUDE_CONFIG_DIR` (not HOME override).
+
+**Critical rule: NEVER override HOME in agent env.** The Claude Agent SDK respects `CLAUDE_CONFIG_DIR` for its `.claude/` directory. Overriding HOME breaks every tool that stores credentials in the home directory (gh CLI, Gmail OAuth, any MCP server that reads `~/.config/`, etc.).
+
+Environment set by `container-runner.ts`:
+- `CLAUDE_CONFIG_DIR` → `data/sessions/{group}/.claude` (per-group session isolation)
+- `NANOCLAW_GROUP_DIR` → group's working directory
+- `NANOCLAW_IPC_DIR` → group's IPC directory
+- `HOME` → inherited from host (real home dir — **do not change**)
+
+When adding MCP servers in `container/agent-runner/src/index.ts`:
+- `process.env.HOME` is the real home dir — credentials at `~/.gmail-mcp/`, `~/.config/gh/` etc. are accessible
+- MCP servers that need HOME/PATH should pass them from `process.env` directly
+- No special env hacks needed — the real HOME is already correct
 
 ## Security
 
