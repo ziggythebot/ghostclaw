@@ -356,6 +356,23 @@ function waitForIpcMessage(): Promise<string | null> {
  * allowing agent teams subagents to run to completion.
  * Also pipes IPC messages into the stream during the query.
  */
+/**
+ * Read mcpServers from the per-group settings.json (at CLAUDE_CONFIG_DIR).
+ * Returns an empty object if not found or on error.
+ */
+function loadSettingsMcpServers(): Record<string, { command: string; args?: string[]; env?: Record<string, string> }> {
+  const configDir = process.env.CLAUDE_CONFIG_DIR;
+  if (!configDir) return {};
+  const settingsPath = path.join(configDir, 'settings.json');
+  try {
+    if (!fs.existsSync(settingsPath)) return {};
+    const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
+    return settings.mcpServers || {};
+  } catch {
+    return {};
+  }
+}
+
 async function runQuery(
   prompt: string,
   sessionId: string | undefined,
@@ -417,6 +434,36 @@ async function runQuery(
     log(`Additional directories: ${extraDirs.join(', ')}`);
   }
 
+  // Load MCP servers from per-group settings.json (standard Claude Code pattern).
+  // Skills and agents add servers by editing settings.json — they're picked up here.
+  const settingsMcpServers = loadSettingsMcpServers();
+  const allMcpServers: Record<string, unknown> = {
+    // The nanoclaw IPC server is always programmatic (needs runtime vars)
+    nanoclaw: {
+      command: 'node',
+      args: [mcpServerPath],
+      env: {
+        NANOCLAW_CHAT_JID: containerInput.chatJid,
+        NANOCLAW_GROUP_FOLDER: containerInput.groupFolder,
+        NANOCLAW_IS_MAIN: containerInput.isMain ? '1' : '0',
+      },
+    },
+    // All other servers come from settings.json
+    ...settingsMcpServers,
+  };
+
+  // Build allowedTools dynamically: base tools + mcp__{name}__* for each server
+  const allowedTools = [
+    'Bash',
+    'Read', 'Write', 'Edit', 'Glob', 'Grep',
+    'WebSearch', 'WebFetch',
+    'Task', 'TaskOutput', 'TaskStop',
+    'TeamCreate', 'TeamDelete', 'SendMessage',
+    'TodoWrite', 'ToolSearch', 'Skill',
+    'NotebookEdit',
+    ...Object.keys(allMcpServers).map((name) => `mcp__${name}__*`),
+  ];
+
   const cwd = process.env.NANOCLAW_GROUP_DIR || '/workspace/group';
   for await (const message of query({
     prompt: stream,
@@ -429,42 +476,12 @@ async function runQuery(
       systemPrompt: globalClaudeMd
         ? { type: 'preset' as const, preset: 'claude_code' as const, append: globalClaudeMd }
         : undefined,
-      allowedTools: [
-        'Bash',
-        'Read', 'Write', 'Edit', 'Glob', 'Grep',
-        'WebSearch', 'WebFetch',
-        'Task', 'TaskOutput', 'TaskStop',
-        'TeamCreate', 'TeamDelete', 'SendMessage',
-        'TodoWrite', 'ToolSearch', 'Skill',
-        'NotebookEdit',
-        'mcp__nanoclaw__*',
-        ...(process.env.GMAIL_MCP_ENABLED === '1' ? ['mcp__gmail__*'] : []),
-      ],
+      allowedTools,
       env: sdkEnv,
       permissionMode: 'bypassPermissions',
       allowDangerouslySkipPermissions: true,
       settingSources: ['project', 'user'],
-      mcpServers: {
-        nanoclaw: {
-          command: 'node',
-          args: [mcpServerPath],
-          env: {
-            NANOCLAW_CHAT_JID: containerInput.chatJid,
-            NANOCLAW_GROUP_FOLDER: containerInput.groupFolder,
-            NANOCLAW_IS_MAIN: containerInput.isMain ? '1' : '0',
-          },
-        },
-        ...(process.env.GMAIL_MCP_ENABLED === '1' ? {
-          gmail: {
-            command: 'npx',
-            args: ['@gongrzhe/server-gmail-autoauth-mcp'],
-            env: {
-              HOME: process.env.HOME || '',
-              PATH: process.env.PATH || '',
-            },
-          },
-        } : {}),
-      },
+      mcpServers: allMcpServers as Record<string, { command: string; args?: string[] }>,
       hooks: {
         PreCompact: [{ hooks: [createPreCompactHook(containerInput.assistantName)] }],
         PreToolUse: [{ matcher: 'Bash', hooks: [createSanitizeBashHook()] }],

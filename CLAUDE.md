@@ -60,20 +60,30 @@ systemctl --user restart ghostclaw
 
 ## Agent Environment Model
 
-Agents run as child processes with the **real HOME** (`/Users/ziggy`). Session isolation uses `CLAUDE_CONFIG_DIR` (not HOME override).
+Agents run as child processes with the **real HOME**. Session isolation uses `CLAUDE_CONFIG_DIR` — **never override HOME**.
 
-**Critical rule: NEVER override HOME in agent env.** The Claude Agent SDK respects `CLAUDE_CONFIG_DIR` for its `.claude/` directory. Overriding HOME breaks every tool that stores credentials in the home directory (gh CLI, Gmail OAuth, any MCP server that reads `~/.config/`, etc.).
+- `container-runner.ts` sets `CLAUDE_CONFIG_DIR=data/sessions/{group}/.claude` for per-group session isolation. The Claude Agent SDK reads this natively.
+- `HOME` is inherited from the host process. Tools like `gh`, Gmail OAuth, and any MCP server find their credentials at `~/` as expected.
+- The MCP SDK automatically passes `HOME`, `PATH`, `USER`, `SHELL`, `TERM`, `LOGNAME` to MCP server processes (safe allowlist). Custom vars must be passed explicitly.
 
-Environment set by `container-runner.ts`:
-- `CLAUDE_CONFIG_DIR` → `data/sessions/{group}/.claude` (per-group session isolation)
-- `NANOCLAW_GROUP_DIR` → group's working directory
-- `NANOCLAW_IPC_DIR` → group's IPC directory
-- `HOME` → inherited from host (real home dir — **do not change**)
+### Adding MCP servers
 
-When adding MCP servers in `container/agent-runner/src/index.ts`:
-- `process.env.HOME` is the real home dir — credentials at `~/.gmail-mcp/`, `~/.config/gh/` etc. are accessible
-- MCP servers that need HOME/PATH should pass them from `process.env` directly
-- No special env hacks needed — the real HOME is already correct
+Use the **standard Claude Code pattern**: add to `data/sessions/{group}/.claude/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "my-server": {
+      "command": "npx",
+      "args": ["my-mcp-package"]
+    }
+  }
+}
+```
+
+The agent-runner reads `mcpServers` from settings.json at startup and merges them with the built-in `nanoclaw` IPC server. `allowedTools` is built dynamically (`mcp__{name}__*` for each server). No code changes needed.
+
+For globally-enabled servers (available to all groups), add to `buildGlobalMcpServers()` in `container-runner.ts` — these get synced into every group's settings.json automatically. Only the `nanoclaw` server stays programmatic (needs runtime vars like `NANOCLAW_CHAT_JID`).
 
 ## Security
 

@@ -56,6 +56,31 @@ function readSecrets(): Record<string, string> {
 }
 
 /**
+ * Build the mcpServers object from global config (env vars).
+ * Each MCP server added here becomes available to all agent instances.
+ * Standard Claude Code settings.json format — agents/skills can also
+ * add servers by editing the per-group settings.json directly.
+ */
+function buildGlobalMcpServers(): Record<
+  string,
+  { command: string; args?: string[]; env?: Record<string, string> }
+> {
+  const servers: Record<
+    string,
+    { command: string; args?: string[]; env?: Record<string, string> }
+  > = {};
+
+  if (process.env.GMAIL_MCP_ENABLED === '1') {
+    servers.gmail = {
+      command: 'npx',
+      args: ['@gongrzhe/server-gmail-autoauth-mcp'],
+    };
+  }
+
+  return servers;
+}
+
+/**
  * Ensure per-group directories and settings exist.
  */
 function ensureGroupDirs(
@@ -84,21 +109,47 @@ function ensureGroupDirs(
   );
   fs.mkdirSync(groupSessionsDir, { recursive: true });
   const settingsFile = path.join(groupSessionsDir, 'settings.json');
+
+  // Build settings with globally-configured MCP servers
+  const globalMcpServers = buildGlobalMcpServers();
+
   if (!fs.existsSync(settingsFile)) {
+    const settings: Record<string, unknown> = {
+      env: {
+        CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1',
+        CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD: '1',
+        CLAUDE_CODE_DISABLE_AUTO_MEMORY: '0',
+      },
+    };
+    if (Object.keys(globalMcpServers).length > 0) {
+      settings.mcpServers = globalMcpServers;
+    }
     fs.writeFileSync(
       settingsFile,
-      JSON.stringify(
-        {
-          env: {
-            CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1',
-            CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD: '1',
-            CLAUDE_CODE_DISABLE_AUTO_MEMORY: '0',
-          },
-        },
-        null,
-        2,
-      ) + '\n',
+      JSON.stringify(settings, null, 2) + '\n',
     );
+  } else {
+    // Sync global MCP servers into existing settings (add new ones, don't remove manual ones)
+    try {
+      const existing = JSON.parse(fs.readFileSync(settingsFile, 'utf-8'));
+      const existingServers = existing.mcpServers || {};
+      let changed = false;
+      for (const [name, config] of Object.entries(globalMcpServers)) {
+        if (!existingServers[name]) {
+          existingServers[name] = config;
+          changed = true;
+        }
+      }
+      if (changed) {
+        existing.mcpServers = existingServers;
+        fs.writeFileSync(
+          settingsFile,
+          JSON.stringify(existing, null, 2) + '\n',
+        );
+      }
+    } catch {
+      // If settings.json is corrupt, leave it alone
+    }
   }
 
   // Sync skills from container/skills/ into each group's .claude/skills/
