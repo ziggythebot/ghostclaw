@@ -5,6 +5,7 @@ import {
   escapeXml,
   formatMessages,
   formatOutbound,
+  markdownToTelegramHtml,
   stripInternalTags,
 } from './router.js';
 import { NewMessage } from './types.js';
@@ -181,6 +182,77 @@ describe('formatOutbound', () => {
     expect(
       formatOutbound('<internal>thinking</internal>The answer is 42'),
     ).toBe('The answer is 42');
+  });
+});
+
+// --- markdownToTelegramHtml ---
+
+describe('markdownToTelegramHtml', () => {
+  it('converts bold **text**', () => {
+    expect(markdownToTelegramHtml('**hello**')).toBe('<b>hello</b>');
+  });
+
+  it('converts bold __text__', () => {
+    expect(markdownToTelegramHtml('__hello__')).toBe('<b>hello</b>');
+  });
+
+  it('converts italic *text*', () => {
+    expect(markdownToTelegramHtml('*hello*')).toBe('<i>hello</i>');
+  });
+
+  it('converts italic _text_', () => {
+    expect(markdownToTelegramHtml('_hello_')).toBe('<i>hello</i>');
+  });
+
+  it('does not italicise underscores inside words', () => {
+    expect(markdownToTelegramHtml('file_name_here')).toBe('file_name_here');
+  });
+
+  it('converts strikethrough ~~text~~', () => {
+    expect(markdownToTelegramHtml('~~gone~~')).toBe('<s>gone</s>');
+  });
+
+  it('converts inline code', () => {
+    expect(markdownToTelegramHtml('use `npm install`')).toBe(
+      'use <code>npm install</code>',
+    );
+  });
+
+  it('converts fenced code blocks', () => {
+    const md = '```js\nconsole.log("hi")\n```';
+    expect(markdownToTelegramHtml(md)).toBe(
+      '<pre>console.log("hi")</pre>',
+    );
+  });
+
+  it('converts links', () => {
+    expect(markdownToTelegramHtml('[click](https://example.com)')).toBe(
+      '<a href="https://example.com">click</a>',
+    );
+  });
+
+  it('escapes HTML entities in plain text', () => {
+    expect(markdownToTelegramHtml('a < b & c > d')).toBe(
+      'a &lt; b &amp; c &gt; d',
+    );
+  });
+
+  it('does not double-escape inside code blocks', () => {
+    const md = '```\na < b & c > d\n```';
+    expect(markdownToTelegramHtml(md)).toBe(
+      '<pre>a &lt; b &amp; c &gt; d</pre>',
+    );
+  });
+
+  it('handles mixed formatting', () => {
+    const md = '**bold** and *italic* and `code`';
+    expect(markdownToTelegramHtml(md)).toBe(
+      '<b>bold</b> and <i>italic</i> and <code>code</code>',
+    );
+  });
+
+  it('passes through plain text unchanged', () => {
+    expect(markdownToTelegramHtml('just plain text')).toBe('just plain text');
   });
 });
 

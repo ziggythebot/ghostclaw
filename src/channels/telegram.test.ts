@@ -706,6 +706,7 @@ describe('TelegramChannel', () => {
       expect(currentBot().api.sendMessage).toHaveBeenCalledWith(
         '100200300',
         'Hello',
+        { parse_mode: 'HTML' },
       );
     });
 
@@ -719,27 +720,33 @@ describe('TelegramChannel', () => {
       expect(currentBot().api.sendMessage).toHaveBeenCalledWith(
         '-1001234567890',
         'Group message',
+        { parse_mode: 'HTML' },
       );
     });
 
-    it('splits messages exceeding 4096 characters', async () => {
+    it('splits long messages', async () => {
       const opts = createTestOpts();
       const channel = new TelegramChannel('test-token', opts);
       await channel.connect();
 
-      const longText = 'x'.repeat(5000);
+      // Build a long message with newlines so line-based splitting kicks in
+      const lines = Array.from({ length: 200 }, (_, i) => `Line ${i}: ${'x'.repeat(30)}`);
+      const longText = lines.join('\n');
       await channel.sendMessage('tg:100200300', longText);
 
       expect(currentBot().api.sendMessage).toHaveBeenCalledTimes(2);
+      // Both chunks should use HTML parse mode
       expect(currentBot().api.sendMessage).toHaveBeenNthCalledWith(
         1,
         '100200300',
-        'x'.repeat(4096),
+        expect.any(String),
+        { parse_mode: 'HTML' },
       );
       expect(currentBot().api.sendMessage).toHaveBeenNthCalledWith(
         2,
         '100200300',
-        'x'.repeat(904),
+        expect.any(String),
+        { parse_mode: 'HTML' },
       );
     });
 

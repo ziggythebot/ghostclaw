@@ -3,6 +3,7 @@ import { Bot, InputFile } from 'grammy';
 import { ASSISTANT_NAME, TRIGGER_PATTERN } from '../config.js';
 import { logger } from '../logger.js';
 import { transcribeBuffer, textToSpeech } from '../transcription.js';
+import { markdownToTelegramHtml } from '../router.js';
 import {
   Channel,
   OnChatMetadata,
@@ -261,17 +262,33 @@ export class TelegramChannel implements Channel {
         }
       }
 
-      // Send as text
+      // Convert markdown to Telegram HTML so bold, italic, code etc. render
+      const html = markdownToTelegramHtml(text);
+
       // Telegram has a 4096 character limit per message — split if needed
       const MAX_LENGTH = 4096;
-      if (text.length <= MAX_LENGTH) {
-        await this.bot.api.sendMessage(numericId, text);
+      if (html.length <= MAX_LENGTH) {
+        await this.bot.api.sendMessage(numericId, html, {
+          parse_mode: 'HTML',
+        });
       } else {
-        for (let i = 0; i < text.length; i += MAX_LENGTH) {
-          await this.bot.api.sendMessage(
-            numericId,
-            text.slice(i, i + MAX_LENGTH),
-          );
+        // Split on newlines to avoid breaking HTML tags mid-tag
+        const chunks: string[] = [];
+        let current = '';
+        for (const line of html.split('\n')) {
+          if (current.length + line.length + 1 > MAX_LENGTH) {
+            if (current) chunks.push(current);
+            current = line;
+          } else {
+            current = current ? `${current}\n${line}` : line;
+          }
+        }
+        if (current) chunks.push(current);
+
+        for (const chunk of chunks) {
+          await this.bot.api.sendMessage(numericId, chunk, {
+            parse_mode: 'HTML',
+          });
         }
       }
       logger.info({ jid, length: text.length }, 'Telegram message sent');
