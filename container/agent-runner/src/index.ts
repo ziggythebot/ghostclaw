@@ -356,9 +356,15 @@ function waitForIpcMessage(): Promise<string | null> {
  * allowing agent teams subagents to run to completion.
  * Also pipes IPC messages into the stream during the query.
  */
+// Names reserved for programmatic servers — cannot be overridden via settings.json.
+const RESERVED_MCP_NAMES = new Set(['nanoclaw']);
+
+// Validate that a key is a safe MCP server name (alphanumeric, hyphens, underscores).
+const VALID_MCP_NAME = /^[a-zA-Z0-9_-]+$/;
+
 /**
  * Read mcpServers from the per-group settings.json (at CLAUDE_CONFIG_DIR).
- * Returns an empty object if not found or on error.
+ * Filters out reserved names and entries with invalid shape.
  */
 function loadSettingsMcpServers(): Record<string, { command: string; args?: string[]; env?: Record<string, string> }> {
   const configDir = process.env.CLAUDE_CONFIG_DIR;
@@ -367,7 +373,27 @@ function loadSettingsMcpServers(): Record<string, { command: string; args?: stri
   try {
     if (!fs.existsSync(settingsPath)) return {};
     const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
-    return settings.mcpServers || {};
+    const raw = settings.mcpServers;
+    if (!raw || typeof raw !== 'object') return {};
+
+    const validated: Record<string, { command: string; args?: string[]; env?: Record<string, string> }> = {};
+    for (const [name, config] of Object.entries(raw)) {
+      if (RESERVED_MCP_NAMES.has(name)) {
+        log(`Ignoring reserved MCP server name in settings: ${name}`);
+        continue;
+      }
+      if (!VALID_MCP_NAME.test(name)) {
+        log(`Ignoring invalid MCP server name in settings: ${name}`);
+        continue;
+      }
+      const cfg = config as Record<string, unknown>;
+      if (!cfg || typeof cfg !== 'object' || typeof cfg.command !== 'string') {
+        log(`Ignoring MCP server with invalid config: ${name}`);
+        continue;
+      }
+      validated[name] = cfg as { command: string; args?: string[]; env?: Record<string, string> };
+    }
+    return validated;
   } catch {
     return {};
   }
@@ -438,7 +464,8 @@ async function runQuery(
   // Skills and agents add servers by editing settings.json — they're picked up here.
   const settingsMcpServers = loadSettingsMcpServers();
   const allMcpServers: Record<string, unknown> = {
-    // The nanoclaw IPC server is always programmatic (needs runtime vars)
+    // Settings-based servers first, then nanoclaw last (cannot be overridden)
+    ...settingsMcpServers,
     nanoclaw: {
       command: 'node',
       args: [mcpServerPath],
@@ -448,8 +475,6 @@ async function runQuery(
         NANOCLAW_IS_MAIN: containerInput.isMain ? '1' : '0',
       },
     },
-    // All other servers come from settings.json
-    ...settingsMcpServers,
   };
 
   // Build allowedTools dynamically: base tools + mcp__{name}__* for each server

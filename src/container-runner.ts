@@ -124,18 +124,20 @@ function ensureGroupDirs(
     if (Object.keys(globalMcpServers).length > 0) {
       settings.mcpServers = globalMcpServers;
     }
-    fs.writeFileSync(
-      settingsFile,
-      JSON.stringify(settings, null, 2) + '\n',
-    );
+    fs.writeFileSync(settingsFile, JSON.stringify(settings, null, 2) + '\n');
   } else {
-    // Sync global MCP servers into existing settings (add new ones, don't remove manual ones)
+    // Sync global MCP servers into existing settings.
+    // Global definitions are source-of-truth — always overwrite so config
+    // updates (package renames, flag changes) propagate to all groups.
+    // Manually-added servers (not in globalMcpServers) are preserved.
     try {
       const existing = JSON.parse(fs.readFileSync(settingsFile, 'utf-8'));
       const existingServers = existing.mcpServers || {};
       let changed = false;
       for (const [name, config] of Object.entries(globalMcpServers)) {
-        if (!existingServers[name]) {
+        if (
+          JSON.stringify(existingServers[name]) !== JSON.stringify(config)
+        ) {
           existingServers[name] = config;
           changed = true;
         }
