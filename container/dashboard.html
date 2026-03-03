@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GhostClaw</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0e0e1a;
+      --surface: #1b1b2b;
+      --elevated: #26263a;
+      --hover: #32324a;
+      --text-primary: #f0f0f0;
+      --text-secondary: #a0a0b8;
+      --text-muted: #6a6a82;
+      --claw-green: #22c55e;
+      --claw-green-light: #4ade80;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --border: #2a2a3e;
+      --border-light: #3a3a52;
+      --font-display: 'Fredoka', sans-serif;
+      --font-chaos: 'Comic Sans MS', cursive;
+      --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      --r-sm: 8px;
+      --r-md: 12px;
+      --r-lg: 20px;
+      --r-full: 9999px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: var(--font-display);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: clip;
+      min-height: 100vh;
+    }
+
+    /* TOP BAR */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 56px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .top-bar-left { display: flex; align-items: center; gap: 12px; }
+    .top-bar-name { font-weight: 600; font-size: 1.125rem; letter-spacing: -0.01em; }
+    .top-bar-name span { color: var(--claw-green); }
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(34,197,94,0.12); color: var(--claw-green);
+      font-size: 0.75rem; font-weight: 500;
+      padding: 4px 12px; border-radius: var(--r-full);
+      border: 1px solid rgba(34,197,94,0.2);
+    }
+    .status-pill.disconnected {
+      background: rgba(239,68,68,0.12); color: var(--error);
+      border-color: rgba(239,68,68,0.2);
+    }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .top-bar-time { font-size: 0.8125rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+    /* TABS */
+    .tab-bar {
+      display: flex; gap: 0; background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+    }
+    .tab-btn {
+      background: none; border: none; color: var(--text-muted);
+      font-family: var(--font-display); font-size: 0.8125rem; font-weight: 500;
+      padding: 12px 16px; cursor: pointer;
+      border-bottom: 2px solid transparent; transition: all 0.15s;
+    }
+    .tab-btn:hover { color: var(--text-secondary); }
+    .tab-btn.active { color: var(--claw-green); border-bottom-color: var(--claw-green); }
+
+    /* DASHBOARD GRID */
+    .dashboard {
+      display: grid;
+      grid-template-columns: 220px 1fr 280px;
+      min-height: calc(100vh - 56px - 44px);
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 20px 0;
+      display: flex; flex-direction: column;
+    }
+    .sidebar-label {
+      font-size: 0.6875rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--text-muted);
+      padding: 0 20px; margin-bottom: 12px;
+    }
+    .channel-list { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+    .channel-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 20px; font-size: 0.875rem; color: var(--text-secondary); cursor: pointer;
+    }
+    .channel-item:hover { background: var(--elevated); }
+    .channel-icon {
+      width: 32px; height: 32px; border-radius: var(--r-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; flex-shrink: 0;
+    }
+    .channel-icon.telegram { background: rgba(34,197,94,0.12); color: var(--claw-green); }
+    .channel-icon.whatsapp { background: rgba(245,158,11,0.1); color: var(--warning); }
+    .channel-icon.default { background: rgba(160,160,184,0.1); color: var(--text-secondary); }
+    .channel-meta { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+    .channel-name { font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .channel-status { display: flex; align-items: center; gap: 5px; font-size: 0.6875rem; color: var(--text-muted); }
+    .channel-status-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+    .channel-status-dot.green { background: var(--claw-green); }
+    .channel-status-dot.yellow { background: var(--warning); }
+    .channel-status-dot.red { background: var(--error); }
+    .channel-status-dot.muted { background: var(--text-muted); }
+
+    .sidebar-footer {
+      margin-top: auto; padding: 16px 20px 0;
+      border-top: 1px solid var(--border); padding-top: 16px;
+    }
+    .sidebar-stat { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px; }
+    .sidebar-stat-value { color: var(--text-secondary); font-weight: 500; }
+
+    /* MAIN CONTENT */
+    .main-content { padding: 24px 28px; overflow-y: auto; }
+    .main-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .main-title { font-size: 1rem; font-weight: 600; }
+
+    /* TAB PANELS */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ACTIVITY FEED */
+    .activity-feed { display: flex; flex-direction: column; gap: 8px; }
+    .activity-item {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 14px 16px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--r-md);
+    }
+    .activity-item:hover { border-color: var(--border-light); background: var(--elevated); }
+    .activity-icon {
+      width: 36px; height: 36px; border-radius: var(--r-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; flex-shrink: 0; background: var(--elevated);
+    }
+    .activity-icon.message { color: var(--claw-green); }
+    .activity-icon.bot { color: var(--claw-green-light); }
+    .activity-icon.task { color: var(--warning); }
+    .activity-icon.error { color: var(--error); }
+    .activity-icon.channel { color: var(--text-secondary); }
+    .activity-body { flex: 1; min-width: 0; }
+    .activity-text { font-size: 0.875rem; line-height: 1.45; }
+    .activity-text strong { font-weight: 600; }
+    .activity-detail { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; line-height: 1.4; }
+    .activity-time { font-size: 0.6875rem; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; padding-top: 2px; }
+
+    .empty-state {
+      text-align: center; padding: 48px 20px; color: var(--text-muted); font-size: 0.875rem;
+    }
+    .empty-state-ghost { font-size: 2rem; margin-bottom: 12px; display: block; }
+
+    /* RIGHT PANEL */
+    .right-panel {
+      background: var(--surface); border-left: 1px solid var(--border);
+      padding: 20px; display: flex; flex-direction: column; gap: 16px;
+      overflow-y: auto;
+    }
+    .panel-label {
+      font-size: 0.6875rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--text-muted);
+    }
+    .task-card {
+      background: var(--elevated); border: 1px solid var(--border);
+      border-radius: var(--r-md); padding: 14px;
+    }
+    .task-card:hover { border-color: var(--border-light); }
+    .task-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .task-title { font-size: 0.8125rem; font-weight: 600; }
+    .task-badge {
+      font-size: 0.625rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.06em; padding: 2px 8px; border-radius: var(--r-full);
+    }
+    .task-badge.active { background: rgba(34,197,94,0.12); color: var(--claw-green); border: 1px solid rgba(34,197,94,0.2); }
+    .task-badge.paused { background: rgba(245,158,11,0.1); color: var(--warning); border: 1px solid rgba(245,158,11,0.2); }
+    .task-badge.completed { background: rgba(160,160,184,0.1); color: var(--text-secondary); border: 1px solid var(--border); }
+    .task-desc { font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; }
+    .task-meta { display: flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 0.6875rem; color: var(--text-muted); }
+    .task-meta-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--text-muted); }
+    .task-actions { display: flex; gap: 6px; margin-top: 10px; }
+
+    .panel-divider { height: 1px; background: var(--border); }
+    .panel-stats { display: flex; flex-direction: column; gap: 10px; }
+    .panel-stat-row { display: flex; justify-content: space-between; align-items: center; }
+    .panel-stat-label { font-size: 0.75rem; color: var(--text-muted); }
+    .panel-stat-value { font-size: 0.8125rem; font-weight: 600; }
+    .panel-stat-value.green { color: var(--claw-green); }
+
+    /* BUTTONS */
+    .btn {
+      font-family: var(--font-display); font-size: 0.6875rem; font-weight: 500;
+      padding: 5px 12px; border-radius: var(--r-sm); cursor: pointer;
+      border: 1px solid var(--border); background: var(--elevated);
+      color: var(--text-secondary); transition: all 0.15s;
+    }
+    .btn:hover { background: var(--hover); color: var(--text-primary); }
+    .btn.primary { background: var(--claw-green); color: #0e0e1a; border-color: var(--claw-green); }
+    .btn.primary:hover { background: var(--claw-green-light); }
+    .btn.danger { color: var(--error); border-color: rgba(239,68,68,0.3); }
+    .btn.danger:hover { background: rgba(239,68,68,0.12); }
+
+    /* SEND BAR */
+    .send-bar {
+      display: flex; gap: 8px; padding: 16px 28px;
+      background: var(--surface); border-top: 1px solid var(--border);
+    }
+    .send-bar select {
+      font-family: var(--font-display); font-size: 0.8125rem;
+      background: var(--elevated); border: 1px solid var(--border);
+      color: var(--text-secondary); padding: 8px 12px;
+      border-radius: var(--r-sm); min-width: 160px;
+    }
+    .send-bar input {
+      flex: 1; font-family: var(--font-display); font-size: 0.8125rem;
+      background: var(--elevated); border: 1px solid var(--border);
+      color: var(--text-primary); padding: 8px 14px;
+      border-radius: var(--r-sm); outline: none;
+    }
+    .send-bar input:focus { border-color: var(--claw-green); }
+    .send-bar input::placeholder { color: var(--text-muted); }
+
+    /* SOULS EDITOR */
+    .souls-grid { display: grid; grid-template-columns: 200px 1fr; gap: 0; min-height: 400px; }
+    .souls-list {
+      border-right: 1px solid var(--border); padding: 8px 0;
+      overflow-y: auto; max-height: 500px;
+    }
+    .soul-item {
+      padding: 10px 16px; font-size: 0.8125rem; color: var(--text-secondary);
+      cursor: pointer; border-left: 2px solid transparent;
+    }
+    .soul-item:hover { background: var(--elevated); }
+    .soul-item.active { background: var(--elevated); color: var(--text-primary); border-left-color: var(--claw-green); }
+    .soul-editor { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .soul-editor textarea {
+      flex: 1; min-height: 300px; font-family: var(--font-mono); font-size: 0.8125rem;
+      background: var(--bg); border: 1px solid var(--border); color: var(--text-primary);
+      padding: 14px; border-radius: var(--r-sm); resize: vertical; line-height: 1.5; outline: none;
+    }
+    .soul-editor textarea:focus { border-color: var(--claw-green); }
+    .soul-editor-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+    /* TASK FORM */
+    .task-form { display: flex; flex-direction: column; gap: 12px; max-width: 500px; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-label { font-size: 0.75rem; font-weight: 500; color: var(--text-muted); }
+    .form-input, .form-select, .form-textarea {
+      font-family: var(--font-display); font-size: 0.8125rem;
+      background: var(--elevated); border: 1px solid var(--border);
+      color: var(--text-primary); padding: 8px 12px;
+      border-radius: var(--r-sm); outline: none;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--claw-green); }
+    .form-textarea { min-height: 80px; resize: vertical; font-family: var(--font-mono); line-height: 1.5; }
+
+    /* CONFIG */
+    .config-grid { display: flex; flex-direction: column; gap: 12px; max-width: 500px; }
+    .config-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--r-md);
+    }
+    .config-key { font-size: 0.8125rem; font-weight: 500; }
+    .config-value { font-size: 0.8125rem; color: var(--text-secondary); font-family: var(--font-mono); }
+
+    /* LOGS */
+    .log-viewer { display: flex; flex-direction: column; gap: 12px; }
+    .log-file {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-md); overflow: hidden;
+    }
+    .log-file-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 14px; background: var(--elevated); cursor: pointer;
+      font-size: 0.8125rem; font-weight: 500;
+    }
+    .log-file-header:hover { background: var(--hover); }
+    .log-file-content {
+      display: none; padding: 14px;
+      font-family: var(--font-mono); font-size: 0.75rem;
+      color: var(--text-secondary); line-height: 1.6;
+      white-space: pre-wrap; word-break: break-word; max-height: 300px; overflow-y: auto;
+    }
+    .log-file-content.open { display: block; }
+
+    /* CHATS PANEL */
+    .chats-list { display: flex; flex-direction: column; gap: 6px; }
+    .chat-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--r-md);
+      cursor: pointer;
+    }
+    .chat-row:hover { border-color: var(--border-light); background: var(--elevated); }
+    .chat-info { display: flex; flex-direction: column; gap: 2px; }
+    .chat-name { font-size: 0.8125rem; font-weight: 500; }
+    .chat-jid { font-size: 0.6875rem; color: var(--text-muted); font-family: var(--font-mono); }
+    .chat-registered {
+      font-size: 0.625rem; font-weight: 600; text-transform: uppercase;
+      padding: 2px 8px; border-radius: var(--r-full);
+      background: rgba(34,197,94,0.12); color: var(--claw-green);
+      border: 1px solid rgba(34,197,94,0.2);
+    }
+
+    /* MESSAGES DRAWER */
+    .messages-drawer {
+      position: fixed; top: 0; right: 0; bottom: 0; width: 440px;
+      background: var(--bg); border-left: 1px solid var(--border);
+      z-index: 200; transform: translateX(100%); transition: transform 0.2s ease;
+      display: flex; flex-direction: column;
+    }
+    .messages-drawer.open { transform: translateX(0); }
+    .messages-drawer-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .messages-drawer-close { background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; }
+    .messages-drawer-body {
+      flex: 1; overflow-y: auto; padding: 16px 20px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .msg-bubble {
+      max-width: 80%; padding: 10px 14px; border-radius: var(--r-md);
+      font-size: 0.8125rem; line-height: 1.45;
+    }
+    .msg-bubble.incoming { background: var(--surface); border: 1px solid var(--border); align-self: flex-start; }
+    .msg-bubble.outgoing { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.2); align-self: flex-end; }
+    .msg-sender { font-size: 0.6875rem; font-weight: 600; color: var(--claw-green); margin-bottom: 4px; }
+    .msg-time { font-size: 0.625rem; color: var(--text-muted); margin-top: 4px; }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 199; display: none; }
+    .overlay.open { display: block; }
+
+    /* FOOTER */
+    .footer {
+      text-align: center; padding: 20px; border-top: 1px solid var(--border);
+    }
+    .footer-text { font-family: var(--font-chaos); font-size: 0.8125rem; color: var(--text-muted); }
+
+    /* RESPONSIVE */
+    @media (max-width: 900px) {
+      .dashboard { grid-template-columns: 1fr; min-height: auto; }
+      .sidebar { border-right: none; border-bottom: 1px solid var(--border); padding: 16px 0; }
+      .sidebar-footer { display: none; }
+      .right-panel { border-left: none; border-top: 1px solid var(--border); }
+      .top-bar-time { display: none; }
+      .souls-grid { grid-template-columns: 1fr; }
+      .souls-list { border-right: none; border-bottom: 1px solid var(--border); max-height: 200px; }
+    }
+    @media (max-width: 600px) {
+      .main-content { padding: 16px; }
+      .right-panel { padding: 16px; }
+      .send-bar { padding: 12px 16px; flex-direction: column; }
+      .send-bar select { min-width: auto; }
+      .messages-drawer { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <header class="top-bar">
+    <div class="top-bar-left">
+      <span class="top-bar-name" style="font-size:1.25rem">&#128123; Ghost<span>Claw</span></span>
+    </div>
+    <div id="statusPill" class="status-pill">
+      <span class="status-dot"></span>
+      <span id="statusText">Connecting...</span>
+    </div>
+    <span id="topBarTime" class="top-bar-time"></span>
+  </header>
+
+  <!-- TABS -->
+  <nav class="tab-bar">
+    <button class="tab-btn active" data-tab="activity">Activity</button>
+    <button class="tab-btn" data-tab="chats">Chats</button>
+    <button class="tab-btn" data-tab="tasks">Tasks</button>
+    <button class="tab-btn" data-tab="souls">Souls</button>
+    <button class="tab-btn" data-tab="config">Config</button>
+    <button class="tab-btn" data-tab="logs">Logs</button>
+  </nav>
+
+  <!-- DASHBOARD -->
+  <div class="dashboard">
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+      <span class="sidebar-label">Channels</span>
+      <ul id="channelList" class="channel-list"></ul>
+      <div class="sidebar-footer">
+        <div class="sidebar-stat"><span>Uptime</span><span id="statUptime" class="sidebar-stat-value">--</span></div>
+        <div class="sidebar-stat"><span>Groups</span><span id="statGroups" class="sidebar-stat-value">--</span></div>
+        <div class="sidebar-stat"><span>Tasks</span><span id="statTasks" class="sidebar-stat-value">--</span></div>
+      </div>
+    </nav>
+
+    <!-- MAIN -->
+    <main class="main-content">
+
+      <!-- ACTIVITY TAB -->
+      <div id="panel-activity" class="tab-panel active">
+        <div class="main-header">
+          <h2 class="main-title">Recent Activity</h2>
+          <span id="activityCount" style="font-size:0.75rem;color:var(--text-muted)">Live</span>
+        </div>
+        <div id="activityFeed" class="activity-feed">
+          <div class="empty-state">
+            <span class="empty-state-ghost">&#128123;</span>
+            Waiting for activity...
+          </div>
+        </div>
+        <!-- Send bar -->
+        <div class="send-bar" style="margin-top:20px;padding:16px 0;background:none;border:none;">
+          <select id="sendJid"></select>
+          <input id="sendText" type="text" placeholder="Send a message as the bot..." />
+          <button class="btn primary" onclick="sendMessage()">Send</button>
+        </div>
+      </div>
+
+      <!-- CHATS TAB -->
+      <div id="panel-chats" class="tab-panel">
+        <div class="main-header">
+          <h2 class="main-title">All Chats</h2>
+        </div>
+        <div id="chatsList" class="chats-list"></div>
+      </div>
+
+      <!-- TASKS TAB -->
+      <div id="panel-tasks" class="tab-panel">
+        <div class="main-header">
+          <h2 class="main-title">Scheduled Tasks</h2>
+          <button class="btn primary" onclick="showTaskForm()">+ New Task</button>
+        </div>
+        <div id="taskForm" style="display:none;margin-bottom:20px;">
+          <div class="task-form">
+            <div class="form-group">
+              <label class="form-label">Group folder</label>
+              <input id="tf-folder" class="form-input" placeholder="e.g. my-group" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Chat JID</label>
+              <select id="tf-jid" class="form-select"></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Prompt</label>
+              <textarea id="tf-prompt" class="form-textarea" placeholder="What should the agent do?"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Schedule type</label>
+              <select id="tf-type" class="form-select">
+                <option value="cron">Cron</option>
+                <option value="interval">Interval</option>
+                <option value="once">Once</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Schedule value</label>
+              <input id="tf-value" class="form-input" placeholder="e.g. 0 9 * * * or 3600000" />
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn primary" onclick="createTask()">Create</button>
+              <button class="btn" onclick="hideTaskForm()">Cancel</button>
+            </div>
+          </div>
+        </div>
+        <div id="tasksList" class="activity-feed"></div>
+      </div>
+
+      <!-- SOULS TAB -->
+      <div id="panel-souls" class="tab-panel">
+        <div class="main-header">
+          <h2 class="main-title">Soul Files (CLAUDE.md)</h2>
+        </div>
+        <div class="souls-grid">
+          <div id="soulsList" class="souls-list"></div>
+          <div class="soul-editor">
+            <div style="font-size:0.8125rem;color:var(--text-muted);margin-bottom:8px;">
+              <span id="soulEditorLabel">Select a group to edit its soul</span>
+            </div>
+            <textarea id="soulContent" placeholder="# CLAUDE.md contents will appear here..."></textarea>
+            <div class="soul-editor-actions">
+              <button class="btn primary" onclick="saveSoul()" id="soulSaveBtn" disabled>Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONFIG TAB -->
+      <div id="panel-config" class="tab-panel">
+        <div class="main-header">
+          <h2 class="main-title">Configuration</h2>
+        </div>
+        <div id="configGrid" class="config-grid"></div>
+      </div>
+
+      <!-- LOGS TAB -->
+      <div id="panel-logs" class="tab-panel">
+        <div class="main-header">
+          <h2 class="main-title">Agent Logs</h2>
+          <select id="logsFolder" class="form-select" onchange="loadLogs(this.value)" style="min-width:160px;"></select>
+        </div>
+        <div id="logViewer" class="log-viewer"></div>
+      </div>
+
+    </main>
+
+    <!-- RIGHT PANEL -->
+    <aside class="right-panel">
+      <span class="panel-label">Active Tasks</span>
+      <div id="taskCards"></div>
+      <div class="panel-divider"></div>
+      <span class="panel-label">System</span>
+      <div id="systemStats" class="panel-stats"></div>
+    </aside>
+
+  </div>
+
+  <!-- MESSAGES DRAWER -->
+  <div id="overlay" class="overlay" onclick="closeMessages()"></div>
+  <div id="messagesDrawer" class="messages-drawer">
+    <div class="messages-drawer-header">
+      <span id="messagesTitle" style="font-size:0.875rem;font-weight:600;"></span>
+      <button class="messages-drawer-close" onclick="closeMessages()">&times;</button>
+    </div>
+    <div id="messagesBody" class="messages-drawer-body"></div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <p class="footer-text">boo.</p>
+  </footer>
+
+<script>
+(function() {
+  'use strict';
+
+  // --- Auth ---
+  const params = new URLSearchParams(location.search);
+  const TOKEN = params.get('token') || '';
+  const headers = { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' };
+
+  // --- State ---
+  let chats = [];
+  let tasks = [];
+  let souls = [];
+  let currentSoulFolder = null;
+  let activityItems = [];
+
+  // --- Utils ---
+  function api(path, opts) {
+    return fetch('/api/' + path, { headers, ...opts }).then(r => r.json());
+  }
+
+  function formatUptime(ms) {
+    const s = Math.floor(ms / 1000);
+    const d = Math.floor(s / 86400);
+    const h = Math.floor((s % 86400) / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    if (d > 0) return d + 'd ' + h + 'h';
+    if (h > 0) return h + 'h ' + m + 'm';
+    return m + 'm';
+  }
+
+  function timeAgo(ts) {
+    const diff = Date.now() - new Date(ts).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return 'just now';
+    if (m < 60) return m + 'm ago';
+    const h = Math.floor(m / 60);
+    if (h < 24) return h + 'h ago';
+    return Math.floor(h / 24) + 'd ago';
+  }
+
+  function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = s || '';
+    return d.innerHTML;
+  }
+
+  function updateClock() {
+    const now = new Date();
+    const opts = { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
+    document.getElementById('topBarTime').textContent = now.toLocaleDateString('en-GB', opts);
+  }
+
+  // --- Tabs ---
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+
+      // Lazy load data
+      const tab = btn.dataset.tab;
+      if (tab === 'chats') loadChats();
+      if (tab === 'tasks') loadTasks();
+      if (tab === 'souls') loadSouls();
+      if (tab === 'config') loadConfig();
+      if (tab === 'logs') loadLogFolders();
+    });
+  });
+
+  // --- Status ---
+  async function loadStatus() {
+    try {
+      const data = await api('status');
+      document.getElementById('statUptime').textContent = formatUptime(data.uptime);
+      document.getElementById('statGroups').textContent = data.groups;
+      document.getElementById('statTasks').textContent = data.activeTasks + '/' + data.totalTasks;
+
+      // Channels
+      const list = document.getElementById('channelList');
+      list.innerHTML = data.channels.map(ch => {
+        const icon = ch.name.toLowerCase().includes('telegram') ? 'telegram'
+          : ch.name.toLowerCase().includes('whatsapp') ? 'whatsapp' : 'default';
+        const dotClass = ch.connected ? 'green' : 'red';
+        const statusText = ch.connected ? 'Connected' : 'Disconnected';
+        return '<li class="channel-item">' +
+          '<div class="channel-icon ' + icon + '">' + (icon === 'telegram' ? '&#9993;' : icon === 'whatsapp' ? '&#9742;' : '&#9632;') + '</div>' +
+          '<div class="channel-meta">' +
+            '<span class="channel-name">' + esc(ch.name) + '</span>' +
+            '<span class="channel-status"><span class="channel-status-dot ' + dotClass + '"></span>' + statusText + '</span>' +
+          '</div></li>';
+      }).join('');
+
+      // Status pill
+      const allConnected = data.channels.length > 0 && data.channels.every(c => c.connected);
+      const pill = document.getElementById('statusPill');
+      const text = document.getElementById('statusText');
+      if (allConnected) {
+        pill.classList.remove('disconnected');
+        text.textContent = 'Haunting';
+      } else {
+        pill.classList.add('disconnected');
+        text.textContent = 'Degraded';
+      }
+
+      // System stats
+      document.getElementById('systemStats').innerHTML =
+        '<div class="panel-stat-row"><span class="panel-stat-label">Status</span><span class="panel-stat-value green">' + (allConnected ? 'Haunting' : 'Degraded') + '</span></div>' +
+        '<div class="panel-stat-row"><span class="panel-stat-label">Uptime</span><span class="panel-stat-value">' + formatUptime(data.uptime) + '</span></div>' +
+        '<div class="panel-stat-row"><span class="panel-stat-label">Groups</span><span class="panel-stat-value">' + data.groups + '</span></div>' +
+        '<div class="panel-stat-row"><span class="panel-stat-label">Active tasks</span><span class="panel-stat-value">' + data.activeTasks + '</span></div>';
+    } catch (e) {
+      document.getElementById('statusText').textContent = 'Offline';
+      document.getElementById('statusPill').classList.add('disconnected');
+    }
+  }
+
+  // --- Activity Feed ---
+  function renderActivity() {
+    const feed = document.getElementById('activityFeed');
+    if (activityItems.length === 0) {
+      feed.innerHTML = '<div class="empty-state"><span class="empty-state-ghost">&#128123;</span>Waiting for activity...</div>';
+      return;
+    }
+    feed.innerHTML = activityItems.slice(0, 50).map(item => {
+      const iconClass = item.type === 'message' ? 'message' : item.type === 'bot_message' ? 'bot'
+        : item.type.startsWith('task') ? 'task' : item.type === 'channel_status' ? 'channel' : 'message';
+      const icon = item.type === 'message' ? '&#9670;' : item.type === 'bot_message' ? '&#9998;'
+        : item.type === 'task_start' ? '&#9654;' : item.type === 'task_complete' ? '&#10003;'
+        : item.type === 'task_error' ? '&#9888;' : '&#9673;';
+
+      let text = '';
+      let detail = '';
+      const d = item.data || {};
+      if (item.type === 'message') {
+        text = 'Message in <strong>' + esc(d.chatName || d.jid || '?') + '</strong>';
+        detail = esc((d.sender_name || d.sender || '') + ': ' + (d.content || '').slice(0, 100));
+      } else if (item.type === 'bot_message') {
+        text = 'Sent message to <strong>' + esc(d.chatName || d.jid || '?') + '</strong>';
+        detail = esc((d.text || '').slice(0, 100));
+        if (d.source === 'dashboard') detail += ' (from dashboard)';
+      } else if (item.type === 'task_start') {
+        text = 'Task started: <strong>' + esc(d.prompt || d.task_id || '?') + '</strong>';
+      } else if (item.type === 'task_complete') {
+        text = 'Task completed: <strong>' + esc(d.prompt || d.task_id || '?') + '</strong>';
+        detail = esc((d.result || '').slice(0, 100));
+      } else if (item.type === 'task_error') {
+        text = 'Task error: <strong>' + esc(d.prompt || d.task_id || '?') + '</strong>';
+        detail = esc(d.error || '');
+      } else if (item.type === 'channel_status') {
+        text = '<strong>' + esc(d.channel || '?') + '</strong> ' + (d.connected ? 'connected' : 'disconnected');
+      } else {
+        text = esc(item.type);
+      }
+
+      return '<div class="activity-item">' +
+        '<div class="activity-icon ' + iconClass + '">' + icon + '</div>' +
+        '<div class="activity-body"><div class="activity-text">' + text + '</div>' +
+        (detail ? '<div class="activity-detail">' + detail + '</div>' : '') +
+        '</div><span class="activity-time">' + timeAgo(item.timestamp) + '</span></div>';
+    }).join('');
+  }
+
+  // --- Chats ---
+  async function loadChats() {
+    chats = await api('chats');
+    const list = document.getElementById('chatsList');
+    const jidSelect = document.getElementById('sendJid');
+    const tfJid = document.getElementById('tf-jid');
+
+    list.innerHTML = chats.map(c =>
+      '<div class="chat-row" onclick="window._openMessages(\'' + esc(c.jid) + '\', \'' + esc(c.name || c.jid) + '\')">' +
+        '<div class="chat-info">' +
+          '<span class="chat-name">' + esc(c.name || 'Unknown') + '</span>' +
+          '<span class="chat-jid">' + esc(c.jid) + '</span>' +
+        '</div>' +
+        (c.registered ? '<span class="chat-registered">Registered</span>' : '') +
+      '</div>'
+    ).join('') || '<div class="empty-state">No chats found</div>';
+
+    // Populate send selects
+    const options = chats.map(c =>
+      '<option value="' + esc(c.jid) + '">' + esc(c.name || c.jid) + '</option>'
+    ).join('');
+    jidSelect.innerHTML = '<option value="">Select chat...</option>' + options;
+    tfJid.innerHTML = '<option value="">Select chat...</option>' + options;
+  }
+
+  // --- Messages ---
+  window._openMessages = async function(jid, name) {
+    document.getElementById('messagesTitle').textContent = name;
+    document.getElementById('messagesBody').innerHTML = '<div class="empty-state">Loading...</div>';
+    document.getElementById('messagesDrawer').classList.add('open');
+    document.getElementById('overlay').classList.add('open');
+
+    const messages = await api('messages/' + encodeURIComponent(jid) + '?limit=50');
+    const body = document.getElementById('messagesBody');
+    body.innerHTML = messages.reverse().map(m => {
+      const cls = m.is_from_me || m.is_bot_message ? 'outgoing' : 'incoming';
+      return '<div class="msg-bubble ' + cls + '">' +
+        (cls === 'incoming' ? '<div class="msg-sender">' + esc(m.sender_name || m.sender) + '</div>' : '') +
+        esc(m.content) +
+        '<div class="msg-time">' + new Date(m.timestamp).toLocaleString() + '</div>' +
+      '</div>';
+    }).join('') || '<div class="empty-state">No messages</div>';
+    body.scrollTop = body.scrollHeight;
+  };
+
+  window.closeMessages = function() {
+    document.getElementById('messagesDrawer').classList.remove('open');
+    document.getElementById('overlay').classList.remove('open');
+  };
+
+  // --- Send Message ---
+  window.sendMessage = async function() {
+    const jid = document.getElementById('sendJid').value;
+    const text = document.getElementById('sendText').value.trim();
+    if (!jid || !text) return;
+    try {
+      await api('send/' + encodeURIComponent(jid), {
+        method: 'POST',
+        body: JSON.stringify({ text }),
+      });
+      document.getElementById('sendText').value = '';
+    } catch (e) {
+      alert('Failed to send: ' + e.message);
+    }
+  };
+
+  // Enter to send
+  document.getElementById('sendText').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); window.sendMessage(); }
+  });
+
+  // --- Tasks ---
+  async function loadTasks() {
+    tasks = await api('tasks');
+    renderTaskList();
+    renderTaskCards();
+  }
+
+  function renderTaskList() {
+    const list = document.getElementById('tasksList');
+    list.innerHTML = tasks.map(t => {
+      const badge = t.status === 'active' ? 'active' : t.status === 'paused' ? 'paused' : 'completed';
+      return '<div class="activity-item">' +
+        '<div class="activity-icon task">&#9654;</div>' +
+        '<div class="activity-body">' +
+          '<div class="activity-text"><strong>' + esc(t.prompt.slice(0, 60)) + '</strong></div>' +
+          '<div class="activity-detail">' + esc(t.schedule_type) + ': ' + esc(t.schedule_value) + ' | ' + esc(t.group_folder) + '</div>' +
+          '<div class="task-actions">' +
+            (t.status === 'active' ? '<button class="btn" onclick="toggleTask(\'' + t.id + '\',\'paused\')">Pause</button>' : '') +
+            (t.status === 'paused' ? '<button class="btn" onclick="toggleTask(\'' + t.id + '\',\'active\')">Resume</button>' : '') +
+            '<button class="btn danger" onclick="removeTask(\'' + t.id + '\')">Delete</button>' +
+          '</div>' +
+        '</div>' +
+        '<span class="task-badge ' + badge + '">' + t.status + '</span>' +
+      '</div>';
+    }).join('') || '<div class="empty-state">No scheduled tasks</div>';
+  }
+
+  function renderTaskCards() {
+    const active = tasks.filter(t => t.status === 'active').slice(0, 5);
+    const container = document.getElementById('taskCards');
+    container.innerHTML = active.map(t =>
+      '<div class="task-card">' +
+        '<div class="task-header"><span class="task-title">' + esc(t.prompt.slice(0, 30)) + '</span>' +
+        '<span class="task-badge active">Active</span></div>' +
+        '<p class="task-desc">' + esc(t.schedule_type) + ': ' + esc(t.schedule_value) + '</p>' +
+        '<div class="task-meta"><span>' + esc(t.group_folder) + '</span>' +
+        (t.last_run ? '<span class="task-meta-dot"></span><span>Last: ' + timeAgo(t.last_run) + '</span>' : '') +
+        '</div></div>'
+    ).join('') || '<div style="font-size:0.75rem;color:var(--text-muted);padding:8px 0;">No active tasks</div>';
+  }
+
+  window.showTaskForm = function() { document.getElementById('taskForm').style.display = 'block'; };
+  window.hideTaskForm = function() { document.getElementById('taskForm').style.display = 'none'; };
+
+  window.createTask = async function() {
+    const body = {
+      group_folder: document.getElementById('tf-folder').value,
+      chat_jid: document.getElementById('tf-jid').value,
+      prompt: document.getElementById('tf-prompt').value,
+      schedule_type: document.getElementById('tf-type').value,
+      schedule_value: document.getElementById('tf-value').value,
+    };
+    if (!body.prompt || !body.schedule_value) return alert('Prompt and schedule value are required');
+    await api('tasks', { method: 'POST', body: JSON.stringify(body) });
+    hideTaskForm();
+    loadTasks();
+  };
+
+  window.toggleTask = async function(id, status) {
+    await api('tasks/' + id, { method: 'PATCH', body: JSON.stringify({ status }) });
+    loadTasks();
+  };
+
+  window.removeTask = async function(id) {
+    if (!confirm('Delete this task?')) return;
+    await api('tasks/' + id, { method: 'DELETE' });
+    loadTasks();
+  };
+
+  // --- Souls ---
+  async function loadSouls() {
+    souls = await api('souls');
+    const list = document.getElementById('soulsList');
+    list.innerHTML = souls.map(s =>
+      '<div class="soul-item' + (s.folder === currentSoulFolder ? ' active' : '') + '" onclick="window._selectSoul(\'' + esc(s.folder) + '\')">' +
+        esc(s.folder) + (s.exists ? '' : ' <span style="color:var(--text-muted)">(empty)</span>') +
+      '</div>'
+    ).join('') || '<div class="empty-state" style="padding:20px;">No groups found</div>';
+  }
+
+  window._selectSoul = async function(folder) {
+    currentSoulFolder = folder;
+    document.getElementById('soulEditorLabel').textContent = folder + '/CLAUDE.md';
+    document.getElementById('soulSaveBtn').disabled = false;
+    const data = await api('souls/' + encodeURIComponent(folder));
+    document.getElementById('soulContent').value = data.content || '';
+    // Update active state
+    document.querySelectorAll('.soul-item').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.soul-item').forEach(el => {
+      if (el.textContent.trim().startsWith(folder)) el.classList.add('active');
+    });
+  };
+
+  window.saveSoul = async function() {
+    if (!currentSoulFolder) return;
+    const content = document.getElementById('soulContent').value;
+    await api('souls/' + encodeURIComponent(currentSoulFolder), {
+      method: 'PUT',
+      body: JSON.stringify({ content }),
+    });
+    document.getElementById('soulEditorLabel').textContent = currentSoulFolder + '/CLAUDE.md - Saved!';
+    setTimeout(() => {
+      document.getElementById('soulEditorLabel').textContent = currentSoulFolder + '/CLAUDE.md';
+    }, 2000);
+  };
+
+  // --- Config ---
+  async function loadConfig() {
+    const config = await api('config');
+    const grid = document.getElementById('configGrid');
+    grid.innerHTML = Object.entries(config).map(([k, v]) =>
+      '<div class="config-row">' +
+        '<span class="config-key">' + esc(k) + '</span>' +
+        '<span class="config-value">' + esc(String(v)) + '</span>' +
+      '</div>'
+    ).join('') || '<div class="empty-state">No configuration values</div>';
+  }
+
+  // --- Logs ---
+  async function loadLogFolders() {
+    const select = document.getElementById('logsFolder');
+    if (select.options.length <= 1) {
+      // Load from souls/groups list
+      if (souls.length === 0) souls = await api('souls');
+      select.innerHTML = '<option value="">Select group...</option>' +
+        souls.map(s => '<option value="' + esc(s.folder) + '">' + esc(s.folder) + '</option>').join('');
+    }
+  }
+
+  window.loadLogs = async function(folder) {
+    if (!folder) return;
+    const logs = await api('logs/' + encodeURIComponent(folder));
+    const viewer = document.getElementById('logViewer');
+    viewer.innerHTML = logs.map((l, i) =>
+      '<div class="log-file">' +
+        '<div class="log-file-header" onclick="this.nextElementSibling.classList.toggle(\'open\')">' +
+          '<span>' + esc(l.filename) + '</span>' +
+          '<span style="font-size:0.6875rem;color:var(--text-muted);">click to expand</span>' +
+        '</div>' +
+        '<div class="log-file-content' + (i === 0 ? ' open' : '') + '">' + esc(l.content) + '</div>' +
+      '</div>'
+    ).join('') || '<div class="empty-state">No logs found</div>';
+  };
+
+  // --- SSE ---
+  function connectSSE() {
+    const url = '/events?token=' + encodeURIComponent(TOKEN);
+    const es = new EventSource(url);
+
+    es.onmessage = function(e) {
+      try {
+        const event = JSON.parse(e.data);
+        if (event.type === 'connected') {
+          console.log('SSE connected');
+          return;
+        }
+        // Add to activity feed
+        activityItems.unshift(event);
+        if (activityItems.length > 200) activityItems.length = 200;
+        renderActivity();
+
+        // Refresh relevant panels
+        if (event.type === 'channel_status') loadStatus();
+        if (event.type === 'task_complete' || event.type === 'task_error') loadTasks();
+      } catch (err) {
+        console.error('SSE parse error:', err);
+      }
+    };
+
+    es.onerror = function() {
+      console.warn('SSE disconnected, reconnecting in 3s...');
+      es.close();
+      setTimeout(connectSSE, 3000);
+    };
+  }
+
+  // --- Init ---
+  updateClock();
+  setInterval(updateClock, 30000);
+  loadStatus();
+  setInterval(loadStatus, 15000);
+  loadChats(); // pre-populate send select
+  loadTasks(); // populate task cards
+  connectSSE();
+
+})();
+</script>
+</body>
+</html>

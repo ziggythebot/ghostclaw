@@ -26,6 +26,7 @@ import {
 import { GroupQueue } from './group-queue.js';
 import { resolveGroupFolderPath } from './group-folder.js';
 import { logger } from './logger.js';
+import { dashboardEvents } from './dashboard-events.js';
 import { RegisteredGroup, ScheduledTask } from './types.js';
 
 export interface SchedulerDependencies {
@@ -73,6 +74,12 @@ async function runTask(
     { taskId: task.id, group: task.group_folder },
     'Running scheduled task',
   );
+
+  dashboardEvents.emit('dashboard', {
+    type: 'task_start',
+    data: { task_id: task.id, prompt: task.prompt, group_folder: task.group_folder },
+    timestamp: new Date().toISOString(),
+  });
 
   const groups = deps.registeredGroups();
   const group = Object.values(groups).find(
@@ -192,6 +199,12 @@ async function runTask(
     status: error ? 'error' : 'success',
     result,
     error,
+  });
+
+  dashboardEvents.emit('dashboard', {
+    type: error ? 'task_error' : 'task_complete',
+    data: { task_id: task.id, prompt: task.prompt, group_folder: task.group_folder, result, error, duration_ms: durationMs },
+    timestamp: new Date().toISOString(),
   });
 
   let nextRun: string | null = null;

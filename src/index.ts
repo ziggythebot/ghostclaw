@@ -41,6 +41,8 @@ import { findChannel, formatMessages, formatOutbound } from './router.js';
 import { startSchedulerLoop } from './task-scheduler.js';
 import { Channel, NewMessage, RegisteredGroup } from './types.js';
 import { logger } from './logger.js';
+import { startDashboard, setDashboardChannels } from './dashboard.js';
+import { dashboardEvents } from './dashboard-events.js';
 
 // Re-export for backwards compatibility during refactor
 export { escapeXml, formatMessages } from './router.js';
@@ -464,7 +466,14 @@ async function main(): Promise<void> {
 
   // Channel callbacks (shared by all channels)
   const channelOpts = {
-    onMessage: (_chatJid: string, msg: NewMessage) => storeMessage(msg),
+    onMessage: (_chatJid: string, msg: NewMessage) => {
+      storeMessage(msg);
+      dashboardEvents.emit('dashboard', {
+        type: 'message',
+        data: { jid: msg.chat_jid, sender: msg.sender, sender_name: msg.sender_name, content: msg.content },
+        timestamp: msg.timestamp,
+      });
+    },
     onChatMetadata: (
       chatJid: string,
       timestamp: string,
@@ -500,6 +509,10 @@ async function main(): Promise<void> {
     };
     initErrorAlerts(sendMessageToAdmin, mainGroupJid);
   }
+
+  // Start dashboard
+  setDashboardChannels(channels);
+  startDashboard();
 
   // Start subsystems (independently of connection handler)
   startSchedulerLoop({
