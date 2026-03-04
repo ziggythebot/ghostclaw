@@ -195,7 +195,12 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
     }, IDLE_TIMEOUT);
   };
 
+  // Keep typing indicator alive throughout processing (Telegram expires it after 5s)
+  const typingInterval = setInterval(() => {
+    channel.setTyping?.(chatJid, true)?.catch(() => {});
+  }, 4000);
   await channel.setTyping?.(chatJid, true);
+
   let hadError = false;
   let outputSentToUser = false;
 
@@ -210,6 +215,7 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
       const text = raw.replace(/<internal>[\s\S]*?<\/internal>/g, '').trim();
       logger.info({ group: group.name }, `Agent output: ${raw.slice(0, 200)}`);
       if (text) {
+        clearInterval(typingInterval);
         await channel.sendMessage(chatJid, text, hasVoiceMessage);
         outputSentToUser = true;
       }
@@ -226,6 +232,7 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
     }
   });
 
+  clearInterval(typingInterval);
   await channel.setTyping?.(chatJid, false);
   if (idleTimer) clearTimeout(idleTimer);
 
