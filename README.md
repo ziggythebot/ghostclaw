@@ -144,7 +144,13 @@ Join the [OpenClawOS Telegram group](https://t.me/+8qJbqxzBQAZkYTNk) to share pr
 
 ## Credits
 
-Originally forked from [NanoClaw](https://github.com/qwibitai/nanoclaw) by [qwibitai](https://github.com/qwibitai). Skills engine built on NanoClaw's three-way merge system.
+GhostClaw wouldn't exist without the work of others.
+
+**[NanoClaw](https://github.com/qwibitai/nanoclaw)** by [qwibitai](https://github.com/qwibitai) — the foundation. GhostClaw is a fork of NanoClaw. The core architecture, agent runner, skills engine (three-way merge, manifest system, replay/rebase), and the skill-based extensibility model are all their work. We stripped out containers and built on top, but the bones are theirs.
+
+**[OpenClaw](https://github.com/OpenInterpreter/open-interpreter)** — the inspiration. Heartbeat monitoring, daily briefings, autonomous task loops, the idea of an agent with its own identity and accounts — these came from watching what OpenClaw pioneered. The vision of a personal AI agent that runs wild on its own hardware started there.
+
+**NanoClaw contributors** — [Alakazam03](https://github.com/Alakazam03), [tydev-new](https://github.com/tydev-new), [pottertech](https://github.com/pottertech), [rgarcia](https://github.com/rgarcia), [AmaxGuan](https://github.com/AmaxGuan), [happydog-intj](https://github.com/happydog-intj), [bindoon](https://github.com/bindoon) — whose contributions to NanoClaw's codebase carry forward into GhostClaw.
 
 ## Licence
 
