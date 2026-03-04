@@ -116,7 +116,9 @@ export async function textToSpeech(text: string): Promise<Buffer | null> {
   const apiKey = env.ELEVENLABS_API_KEY;
 
   if (!apiKey) {
-    logger.warn('ELEVENLABS_API_KEY not found in .env - voice replies disabled');
+    logger.warn(
+      'ELEVENLABS_API_KEY not found in .env - voice replies disabled',
+    );
     return null;
   }
 
