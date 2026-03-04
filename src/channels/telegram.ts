@@ -248,6 +248,7 @@ export class TelegramChannel implements Channel {
 
       // Send as voice note if replying to a voice message
       if (voiceReply) {
+        logger.info({ jid }, 'Attempting voice reply via TTS');
         const audioBuffer = await textToSpeech(text);
         if (audioBuffer) {
           await this.bot.api.sendVoice(

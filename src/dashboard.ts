@@ -51,10 +51,7 @@ function getOrCreateToken(): string {
   return token;
 }
 
-function checkAuth(
-  req: http.IncomingMessage,
-  token: string,
-): boolean {
+function checkAuth(req: http.IncomingMessage, token: string): boolean {
   const url = new URL(req.url || '/', `http://${req.headers.host}`);
   const queryToken = url.searchParams.get('token');
   if (queryToken === token) return true;
@@ -63,11 +60,7 @@ function checkAuth(
   return false;
 }
 
-function json(
-  res: http.ServerResponse,
-  data: unknown,
-  status = 200,
-): void {
+function json(res: http.ServerResponse, data: unknown, status = 200): void {
   res.writeHead(status, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify(data));
 }
@@ -84,11 +77,16 @@ function readBody(req: http.IncomingMessage): Promise<string> {
   });
 }
 
-function parseRoute(
-  pathname: string,
-): { base: string; param?: string; sub?: string } {
+function parseRoute(pathname: string): {
+  base: string;
+  param?: string;
+  sub?: string;
+} {
   // /api/tasks/abc123/runs -> { base: 'tasks', param: 'abc123', sub: 'runs' }
-  const parts = pathname.replace(/^\/api\//, '').split('/').filter(Boolean);
+  const parts = pathname
+    .replace(/^\/api\//, '')
+    .split('/')
+    .filter(Boolean);
   return { base: parts[0], param: parts[1], sub: parts[2] };
 }
 
@@ -114,8 +112,14 @@ export function startDashboard(): void {
 
     // CORS for local dev
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader(
+      'Access-Control-Allow-Methods',
+      'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+    );
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      'Content-Type, Authorization',
+    );
     if (method === 'OPTIONS') {
       res.writeHead(204);
       res.end();
@@ -271,11 +275,7 @@ export function startDashboard(): void {
         }
 
         // GET /api/tasks/:id/runs
-        if (
-          route.base === 'tasks' &&
-          route.param &&
-          route.sub === 'runs'
-        ) {
+        if (route.base === 'tasks' && route.param && route.sub === 'runs') {
           const Database = (await import('better-sqlite3')).default;
           const dbPath = path.join(process.cwd(), 'store', 'messages.db');
           const db = new Database(dbPath, { readonly: true });
@@ -307,11 +307,7 @@ export function startDashboard(): void {
             return;
           }
           if (route.param && method === 'GET') {
-            const claudePath = path.join(
-              GROUPS_DIR,
-              route.param,
-              'CLAUDE.md',
-            );
+            const claudePath = path.join(GROUPS_DIR, route.param, 'CLAUDE.md');
             if (fs.existsSync(claudePath)) {
               json(res, {
                 folder: route.param,
@@ -324,11 +320,7 @@ export function startDashboard(): void {
           }
           if (route.param && method === 'PUT') {
             const body = JSON.parse(await readBody(req));
-            const claudePath = path.join(
-              GROUPS_DIR,
-              route.param,
-              'CLAUDE.md',
-            );
+            const claudePath = path.join(GROUPS_DIR, route.param, 'CLAUDE.md');
             fs.mkdirSync(path.dirname(claudePath), { recursive: true });
             fs.writeFileSync(claudePath, body.content);
             json(res, { ok: true });
@@ -375,11 +367,7 @@ export function startDashboard(): void {
             json(res, []);
             return;
           }
-          const files = fs
-            .readdirSync(logsDir)
-            .sort()
-            .reverse()
-            .slice(0, 10);
+          const files = fs.readdirSync(logsDir).sort().reverse().slice(0, 10);
           const logs = files.map((f) => ({
             filename: f,
             content: fs

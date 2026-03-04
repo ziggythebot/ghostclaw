@@ -77,7 +77,11 @@ async function runTask(
 
   dashboardEvents.emit('dashboard', {
     type: 'task_start',
-    data: { task_id: task.id, prompt: task.prompt, group_folder: task.group_folder },
+    data: {
+      task_id: task.id,
+      prompt: task.prompt,
+      group_folder: task.group_folder,
+    },
     timestamp: new Date().toISOString(),
   });
 
@@ -203,7 +207,14 @@ async function runTask(
 
   dashboardEvents.emit('dashboard', {
     type: error ? 'task_error' : 'task_complete',
-    data: { task_id: task.id, prompt: task.prompt, group_folder: task.group_folder, result, error, duration_ms: durationMs },
+    data: {
+      task_id: task.id,
+      prompt: task.prompt,
+      group_folder: task.group_folder,
+      result,
+      error,
+      duration_ms: durationMs,
+    },
     timestamp: new Date().toISOString(),
   });
 

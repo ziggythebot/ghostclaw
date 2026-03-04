@@ -503,7 +503,11 @@ async function main(): Promise<void> {
 
   // Clear stale errors from previous runs so heartbeat starts fresh
   const errorsLog = path.join(process.cwd(), 'logs', 'errors.log');
-  try { fs.writeFileSync(errorsLog, ''); } catch { /* ignore */ }
+  try {
+    fs.writeFileSync(errorsLog, '');
+  } catch {
+    /* ignore */
+  }
 
   initDatabase();
   logger.info('Database initialized');

@@ -4,57 +4,65 @@ import { WAMessage, WASocket } from '@whiskeysockets/baileys';
 import { readEnvFile } from './env.js';
 import { logger } from './logger.js';
 
-interface TranscriptionConfig {
-  model: string;
-  enabled: boolean;
-  fallbackMessage: string;
-}
-
-const DEFAULT_CONFIG: TranscriptionConfig = {
-  model: 'whisper-1',
-  enabled: true,
-  fallbackMessage: '[Voice Message - transcription unavailable]',
-};
+const FALLBACK_MESSAGE = '[Voice Message - transcription unavailable]';
 
 export async function transcribeBuffer(
   audioBuffer: Buffer,
 ): Promise<string | null> {
-  return transcribeWithOpenAI(audioBuffer, DEFAULT_CONFIG);
+  return transcribeWithElevenLabs(audioBuffer);
 }
 
-async function transcribeWithOpenAI(
+async function transcribeWithElevenLabs(
   audioBuffer: Buffer,
-  config: TranscriptionConfig,
 ): Promise<string | null> {
-  const env = readEnvFile(['OPENAI_API_KEY']);
-  const apiKey = env.OPENAI_API_KEY;
+  const env = readEnvFile(['ELEVENLABS_API_KEY']);
+  const apiKey = env.ELEVENLABS_API_KEY;
 
   if (!apiKey) {
-    logger.warn('OPENAI_API_KEY not set in .env');
+    logger.warn('ELEVENLABS_API_KEY not set in .env - transcription disabled');
     return null;
   }
 
   try {
-    const openaiModule = await import('openai');
-    const OpenAI = openaiModule.default;
-    const toFile = openaiModule.toFile;
+    const formData = new FormData();
+    formData.append('model_id', 'scribe_v1');
+    formData.append(
+      'file',
+      new Blob([audioBuffer], { type: 'audio/ogg' }),
+      'voice.ogg',
+    );
 
-    const openai = new OpenAI({ apiKey });
+    const response = await fetch(
+      'https://api.elevenlabs.io/v1/speech-to-text',
+      {
+        method: 'POST',
+        headers: { 'xi-api-key': apiKey },
+        body: formData,
+      },
+    );
 
-    const file = await toFile(audioBuffer, 'voice.ogg', {
-      type: 'audio/ogg',
-    });
+    if (!response.ok) {
+      const body = await response.text().catch(() => '');
+      logger.error(
+        { status: response.status, statusText: response.statusText, body },
+        'ElevenLabs STT failed',
+      );
+      return null;
+    }
 
-    const transcription = await openai.audio.transcriptions.create({
-      file: file,
-      model: config.model,
-      response_format: 'text',
-    });
+    const result = (await response.json()) as { text?: string };
+    if (!result.text) {
+      logger.warn('ElevenLabs STT returned empty text');
+      return null;
+    }
 
-    // When response_format is 'text', the API returns a plain string
-    return transcription as unknown as string;
+    logger.info(
+      { length: result.text.length },
+      'ElevenLabs transcription complete',
+    );
+    return result.text;
   } catch (err) {
-    logger.error({ err }, 'OpenAI transcription failed');
+    logger.error({ err }, 'ElevenLabs STT failed');
     return null;
   }
 }
@@ -63,12 +71,6 @@ export async function transcribeAudioMessage(
   msg: WAMessage,
   sock: WASocket,
 ): Promise<string | null> {
-  const config = DEFAULT_CONFIG;
-
-  if (!config.enabled) {
-    return config.fallbackMessage;
-  }
-
   try {
     const buffer = (await downloadMediaMessage(
       msg,
@@ -82,21 +84,21 @@ export async function transcribeAudioMessage(
 
     if (!buffer || buffer.length === 0) {
       logger.error('Failed to download audio message');
-      return config.fallbackMessage;
+      return FALLBACK_MESSAGE;
     }
 
     logger.info({ bytes: buffer.length }, 'Downloaded audio message');
 
-    const transcript = await transcribeWithOpenAI(buffer, config);
+    const transcript = await transcribeWithElevenLabs(buffer);
 
     if (!transcript) {
-      return config.fallbackMessage;
+      return FALLBACK_MESSAGE;
     }
 
     return transcript.trim();
   } catch (err) {
     logger.error({ err }, 'Transcription error');
-    return config.fallbackMessage;
+    return FALLBACK_MESSAGE;
   }
 }
 
@@ -109,10 +111,12 @@ export function isVoiceMessage(msg: WAMessage): boolean {
  * Returns an MP3 audio buffer, or null if not configured.
  */
 export async function textToSpeech(text: string): Promise<Buffer | null> {
+  logger.info({ textLength: text.length }, 'TTS requested');
   const env = readEnvFile(['ELEVENLABS_API_KEY', 'ELEVENLABS_VOICE_ID']);
   const apiKey = env.ELEVENLABS_API_KEY;
 
   if (!apiKey) {
+    logger.warn('ELEVENLABS_API_KEY not found in .env - voice replies disabled');
     return null;
   }
 
@@ -135,15 +139,18 @@ export async function textToSpeech(text: string): Promise<Buffer | null> {
     );
 
     if (!response.ok) {
+      const body = await response.text().catch(() => '');
       logger.error(
-        { status: response.status, statusText: response.statusText },
+        { status: response.status, statusText: response.statusText, body },
         'ElevenLabs TTS failed',
       );
       return null;
     }
 
     const arrayBuffer = await response.arrayBuffer();
-    return Buffer.from(arrayBuffer);
+    const buffer = Buffer.from(arrayBuffer);
+    logger.info({ bytes: buffer.length }, 'TTS audio generated');
+    return buffer;
   } catch (err) {
     logger.error({ err }, 'ElevenLabs TTS failed');
     return null;
