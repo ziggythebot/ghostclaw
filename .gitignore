@@ -16,6 +16,7 @@ groups/*
 groups/main/*
 groups/global/*
 !groups/main/CLAUDE.md
+!groups/main/skills-research-report.md
 !groups/global/CLAUDE.md
 
 # Secrets
