@@ -13,7 +13,7 @@ import {
   updateTask,
   deleteTask,
 } from './db.js';
-import { GROUPS_DIR } from './config.js';
+import { DATA_DIR, GROUPS_DIR } from './config.js';
 import { dashboardEvents, DashboardEvent } from './dashboard-events.js';
 import { logger } from './logger.js';
 import { readEnvFile } from './env.js';
@@ -376,6 +376,119 @@ export function startDashboard(): void {
           }));
           json(res, logs);
           return;
+        }
+
+        // GET /api/ralph — list all Ralph runs
+        if (route.base === 'ralph' && !route.param && method === 'GET') {
+        const ralphDir = path.join(DATA_DIR, 'ralph');
+        if (!fs.existsSync(ralphDir)) {
+          json(res, []);
+          return;
+        }
+        const runs = fs
+          .readdirSync(ralphDir)
+          .filter((d) =>
+            fs.existsSync(path.join(ralphDir, d, 'config.json')),
+          )
+          .map((d) => {
+            try {
+              const config = JSON.parse(
+                fs.readFileSync(
+                  path.join(ralphDir, d, 'config.json'),
+                  'utf-8',
+                ),
+              );
+              let outputFiles: { name: string; size: number }[] = [];
+              try {
+                outputFiles = fs
+                  .readdirSync(config.workDir)
+                  .filter(
+                    (f: string) => f.endsWith('.md') || f.endsWith('.txt'),
+                  )
+                  .map((f: string) => ({
+                    name: f,
+                    size: fs.statSync(path.join(config.workDir, f)).size,
+                  }));
+              } catch {
+                /* workDir may not exist */
+              }
+              return { ...config, outputFiles };
+            } catch {
+              return null;
+            }
+          })
+          .filter(Boolean)
+          .sort(
+            (a: any, b: any) =>
+              new Date(b.startedAt).getTime() -
+              new Date(a.startedAt).getTime(),
+          );
+        json(res, runs);
+        return;
+      }
+
+      // GET /api/ralph/:runId/progress
+      if (
+        route.base === 'ralph' &&
+        route.param &&
+        route.sub === 'progress' &&
+        method === 'GET'
+      ) {
+        const progressPath = path.join(
+          DATA_DIR,
+          'ralph',
+          route.param,
+          'progress.txt',
+        );
+        try {
+          const content = fs.readFileSync(progressPath, 'utf-8');
+          res.writeHead(200, { 'Content-Type': 'text/plain' });
+          res.end(content);
+        } catch {
+          res.writeHead(404);
+          res.end('Not found');
+        }
+        return;
+      }
+
+      // GET /api/ralph/:runId/file?name=research.md
+      if (
+        route.base === 'ralph' &&
+        route.param &&
+        route.sub === 'file' &&
+        method === 'GET'
+      ) {
+        const filename = url.searchParams.get('name');
+        if (!filename || filename.includes('..') || filename.includes('/')) {
+          json(res, { error: 'Invalid filename' }, 400);
+          return;
+        }
+        try {
+          const configPath = path.join(
+            DATA_DIR,
+            'ralph',
+            route.param,
+            'config.json',
+          );
+          const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+          const filePath = path.join(config.workDir, filename);
+          const content = fs.readFileSync(filePath);
+          const ext = path.extname(filename).toLowerCase();
+          const contentType =
+            ext === '.md'
+              ? 'text/markdown'
+              : ext === '.txt'
+                ? 'text/plain'
+                : 'application/octet-stream';
+          res.writeHead(200, {
+            'Content-Type': contentType,
+            'Content-Disposition': `attachment; filename="${filename}"`,
+          });
+          res.end(content);
+        } catch {
+          json(res, { error: 'File not found' }, 404);
+        }
+        return;
         }
       }
 

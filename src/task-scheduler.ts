@@ -40,6 +40,11 @@ export interface SchedulerDependencies {
     groupFolder: string,
   ) => void;
   sendMessage: (jid: string, text: string) => Promise<void>;
+  sendDocument?: (
+    jid: string,
+    buffer: Buffer,
+    filename: string,
+  ) => Promise<void>;
 }
 
 async function runTask(
@@ -252,10 +257,12 @@ async function runTask(
         {
           createTask,
           sendMessage: deps.sendMessage,
+          sendDocument: deps.sendDocument,
           readFile: (p: string) => fs.readFileSync(p, 'utf-8'),
           writeFile: (p: string, c: string) => fs.writeFileSync(p, c),
           mkdirSync: (p: string, opts?) => fs.mkdirSync(p, opts),
           existsSync: (p: string) => fs.existsSync(p),
+          readdirSync: (p: string) => fs.readdirSync(p),
           now: () => new Date().toISOString(),
         },
       );

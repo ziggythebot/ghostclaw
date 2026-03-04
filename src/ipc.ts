@@ -17,6 +17,11 @@ import { RegisteredGroup } from './types.js';
 
 export interface IpcDeps {
   sendMessage: (jid: string, text: string) => Promise<void>;
+  sendDocument?: (
+    jid: string,
+    buffer: Buffer,
+    filename: string,
+  ) => Promise<void>;
   registeredGroups: () => Record<string, RegisteredGroup>;
   registerGroup: (jid: string, group: RegisteredGroup) => void;
   syncGroupMetadata: (force: boolean) => Promise<void>;
@@ -411,10 +416,12 @@ export async function processTaskIpc(
             {
               createTask: createTaskFn,
               sendMessage: deps.sendMessage,
+              sendDocument: deps.sendDocument,
               readFile: (p: string) => fs.readFileSync(p, 'utf-8'),
               writeFile: (p: string, c: string) => fs.writeFileSync(p, c),
               mkdirSync: (p: string, opts?) => fs.mkdirSync(p, opts),
               existsSync: (p: string) => fs.existsSync(p),
+              readdirSync: (p: string) => fs.readdirSync(p),
               now: () => new Date().toISOString(),
             },
           );

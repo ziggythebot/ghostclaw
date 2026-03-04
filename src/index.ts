@@ -602,12 +602,22 @@ async function main(): Promise<void> {
       const text = formatOutbound(rawText);
       if (text) await channel.sendMessage(jid, text);
     },
+    sendDocument: async (jid, buffer, filename) => {
+      const channel = findChannel(channels, jid);
+      if (!channel?.sendDocument) return;
+      await channel.sendDocument(jid, buffer, filename);
+    },
   });
   startIpcWatcher({
     sendMessage: (jid, text) => {
       const channel = findChannel(channels, jid);
       if (!channel) throw new Error(`No channel for JID: ${jid}`);
       return channel.sendMessage(jid, text);
+    },
+    sendDocument: async (jid, buffer, filename) => {
+      const channel = findChannel(channels, jid);
+      if (!channel?.sendDocument) return;
+      await channel.sendDocument(jid, buffer, filename);
     },
     registeredGroups: () => registeredGroups,
     registerGroup,
@@ -618,6 +628,13 @@ async function main(): Promise<void> {
       writeGroupsSnapshot(gf, im, ag, rj),
   });
   queue.setProcessMessagesFn(processGroupMessages);
+  queue.setOnMessageQueuedFn((groupJid) => {
+    const channel = findChannel(channels, groupJid);
+    if (!channel) return;
+    channel
+      .sendMessage(groupJid, 'Got it, finishing a task first...')
+      .catch(() => {});
+  });
   recoverPendingMessages();
   startMessageLoop().catch((err) => {
     logger.fatal({ err }, 'Message loop crashed unexpectedly');

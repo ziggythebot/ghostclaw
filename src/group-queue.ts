@@ -32,6 +32,7 @@ export class GroupQueue {
   private waitingGroups: string[] = [];
   private processMessagesFn: ((groupJid: string) => Promise<boolean>) | null =
     null;
+  private onMessageQueuedFn: ((groupJid: string) => void) | null = null;
   private shuttingDown = false;
 
   private getGroup(groupJid: string): GroupState {
@@ -57,6 +58,10 @@ export class GroupQueue {
     this.processMessagesFn = fn;
   }
 
+  setOnMessageQueuedFn(fn: (groupJid: string) => void): void {
+    this.onMessageQueuedFn = fn;
+  }
+
   enqueueMessageCheck(groupJid: string): void {
     if (this.shuttingDown) return;
 
@@ -76,6 +81,9 @@ export class GroupQueue {
         // task container exits (pendingMessages flag below).
       }
       state.pendingMessages = true;
+      if (state.isTaskContainer && this.onMessageQueuedFn) {
+        this.onMessageQueuedFn(groupJid);
+      }
       logger.debug({ groupJid }, 'Container active, message queued');
       return;
     }

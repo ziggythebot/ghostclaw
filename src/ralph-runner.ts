@@ -22,10 +22,16 @@ import { ScheduledTask } from './types.js';
 export interface RalphRunnerDeps {
   createTask: (task: Omit<ScheduledTask, 'last_run' | 'last_result'>) => void;
   sendMessage: (jid: string, text: string) => Promise<void>;
+  sendDocument?: (
+    jid: string,
+    buffer: Buffer,
+    filename: string,
+  ) => Promise<void>;
   readFile: (path: string) => string;
   writeFile: (path: string, content: string) => void;
   mkdirSync: (path: string, opts?: { recursive?: boolean }) => void;
   existsSync: (path: string) => boolean;
+  readdirSync?: (path: string) => string[];
   now: () => string;
 }
 
@@ -89,6 +95,35 @@ function scheduleIteration(
     status: 'active',
     created_at: now,
   });
+}
+
+/** Send .md files from workDir to user after completion. */
+async function sendOutputFiles(
+  config: RalphConfig,
+  deps: RalphRunnerDeps,
+): Promise<void> {
+  if (!deps.sendDocument || !deps.readdirSync) return;
+
+  try {
+    const files = deps
+      .readdirSync(config.workDir)
+      .filter((f) => f.endsWith('.md'));
+
+    for (const file of files) {
+      try {
+        const content = deps.readFile(path.join(config.workDir, file));
+        await deps.sendDocument(
+          config.targetJid,
+          Buffer.from(content),
+          file,
+        );
+      } catch (err) {
+        logger.warn({ file, err }, 'Failed to send Ralph output file');
+      }
+    }
+  } catch (err) {
+    logger.warn({ err }, 'Failed to list Ralph output files');
+  }
 }
 
 /** Start a new Ralph run. Returns the runId. */
@@ -250,6 +285,10 @@ export async function onIterationComplete(
       config.targetJid,
       `Ralph run ${runId} completed. ${completed}/${updatedTasks.length} tasks done in ${iteration} iterations.`,
     );
+
+    // Send any .md output files to the user
+    await sendOutputFiles(config, deps);
+
     logger.info({ runId, iterations: iteration }, 'Ralph run completed');
     return;
   }
