@@ -74,7 +74,7 @@ function scheduleIteration(
 ): void {
   const iteration = config.currentIteration + 1;
   const wrappedPrompt = wrapWithPrefix(config.runId, iteration, prompt);
-  const taskId = `ralph-iter-${config.runId}-${iteration}`;
+  const taskId = `ralph-iter-${config.runId}-${iteration}-${Date.now()}`;
   const now = deps.now();
 
   deps.createTask({

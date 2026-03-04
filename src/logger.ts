@@ -46,5 +46,7 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason) => {
   const err = reason instanceof Error ? reason : new Error(String(reason));
   logger.error({ err: reason }, 'Unhandled rejection');
-  handleCriticalError(err, 'Unhandled rejection').catch(() => {});
+  // Don't alert the user on transient rejections (connection drops, timeouts, etc.)
+  // These are logged but not worth waking someone up over.
+  // Only uncaughtExceptions (which crash the process) send alerts.
 });
