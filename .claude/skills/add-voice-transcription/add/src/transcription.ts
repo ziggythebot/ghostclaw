@@ -18,7 +18,7 @@ async function transcribeWithElevenLabs(
 
   try {
     const formData = new FormData();
-    formData.append('model_id', 'scribe_v1');
+    formData.append('model_id', 'scribe_v2');
     formData.append(
       'file',
       new Blob([audioBuffer], { type: 'audio/ogg' }),
