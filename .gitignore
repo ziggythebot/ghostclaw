@@ -35,3 +35,12 @@ groups/global/*
 
 agents-sdk-docs
 agents-repo/
+
+# Image generation scripts with API tokens
+gen*.mjs
+faceswap*.sh
+faceswap*.py
+proper_faceswap.mjs
+send_*.js
+send_*.mjs
+mallorca.mjs
