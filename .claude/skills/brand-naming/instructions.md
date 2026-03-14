@@ -1,142 +1,151 @@
 # Brand Naming Skill
 
-A systematic approach to brand naming that avoids generic LLM suggestions and checks real-world availability.
+Based on David Placek's methodology (Lexicon Branding - named Pentium, Swiffer, BlackBerry, Sonos) and Martin Roll's naming techniques.
 
-## Goals
+## Three Core Pillars (David Placek)
 
-1. **Avoid the obvious** - No Forge, Apex, Velocity, Summit, Nexus, Vertex
-2. **Check availability** - Domain, Twitter, basic trademark conflicts
-3. **Be creative** - Use linguistic frameworks, not first-pass AI slop
-4. **Memorable** - Pronounceable, spellable, distinctive
+### 1. Build for Trust
+Names must inspire both trust AND imagination. Avoid pure invention - use familiar components.
 
-## Process
+**Good:** Azure (familiar + interesting, smooth sound, z-differentiation)
+**Bad:** Made-up nonsense with no anchors
 
-### Step 1: Understand the Brief
+### 2. Communicate an Original Idea (Never Describe)
+Descriptive names = forgettable clutter. Invented/evocative names = signal innovation.
 
-Ask the user about:
-- **What it is** - Product, company, feature?
-- **Target audience** - Enterprise? Developers? Consumers?
-- **Positioning** - Fast? Premium? Simple? Innovative?
-- **Vibe** - Professional? Playful? Technical? Human?
-- **Must-haves** - Any requirements? (e.g., ".ai domain available")
+**Good:** Google (invented, signals something new)
+**Bad:** Infoseek (describes what it does)
 
-### Step 2: Category Audit
+### 3. Be Accessible
+Human brain resists complexity. Use familiar components for easy processing.
 
-Before suggesting names, check what competitors use:
+**Good:** Outback (simple, familiar)
+**Bad:** Xygr8tion (impossible to process)
 
-```
-Search for "[category] companies 2026" and note naming patterns.
+## The Process
 
-Example: If naming an AI dev agency, check what other dev agencies are called.
-Flag patterns like:
-- "[Adjective] + AI" (avoid)
-- "[Metal/Element]" (overdone)
-- "[Speed word]" (cliche)
-```
+### Step 0: Gather Context (Ask Questions First)
 
-**Internal blacklist** (never suggest these):
+**ALWAYS start by asking the user these questions using AskUserQuestion:**
+
+1. **What is it?** (Product, company, service, feature)
+2. **What's the core value proposition?** (What problem does it solve? What transformation does it create?)
+3. **Who buys it?** (Target audience - CTOs, developers, consumers, SMBs, enterprises?)
+4. **What's the positioning?** (Premium/budget, fast/thorough, simple/powerful, innovative/reliable)
+5. **What should it feel like?** (Technical/approachable, infrastructure/surface-level, enterprise/startup, safe/bold)
+6. **Any constraints?** (Domain requirements like .ai available, specific sounds to avoid, existing brand associations)
+
+**Example for this project:**
+- What: AI dev agency
+- Core value: Finding problems in legacy systems, selling into them, iterating fast but safely
+- Who: Enterprise CTOs, legacy companies
+- Positioning: Infrastructure-level, technological depth, safe transformation
+- Feel: Quite infrastructure, technological, development-focused (not surface-level AI wrapper)
+
+### Step 1: The Diamond Framework
+
+Using the context gathered above, answer these four questions BEFORE generating names:
+
+1. **What does winning look like?** - Define success criteria
+2. **What do we have to win?** - What are our assets/advantages?
+3. **What do we need to win?** - What's missing or required?
+4. **What do we need to say?** - Core message/positioning
+
+This creates alignment between the name and broader brand strategy.
+
+### Step 2: Set Standards & Generate Volume
+
+**Set high standards:** Aim for fresh, energetic ideas beyond basic positioning.
+
+**Quantity breeds quality:** Generate AT LEAST 1,000 creative ideas before selecting 50-100 candidates for evaluation.
+
+**CRITICAL:** Do NOT present the first 10 names that come to mind. Those are LLM slop. Push past the obvious.
+
+### Step 3: Apply Naming Techniques (Martin Roll)
+
+Use these frameworks to generate candidates:
+
+#### Visual Names
+Create mental imagery associated with brand traits
+- Jaguar (speed, agility, stealth)
+- Amazon (vast, exploratory)
+
+#### Expressive Names
+Evoke psychological states or feelings
+- Pure Yoga (clarity, cleanliness)
+- Awfully Chocolate (indulgent contradiction)
+
+#### Neologisms
+Combine or respell existing words meaningfully
+- LEGO (Danish "leg godt" = play well)
+- Uniqlo (unique + clothing)
+
+#### Nature Names
+Draw from natural elements/phenomena
+- Sequoia Capital (enduring, mighty)
+- Banyan Tree (expansive, sheltering)
+
+#### Sound Symbolism (Placek's technique)
+Consider what the name should SOUND like:
+- **Fast:** crisp consonants (Dasani - "da" + "san" + "i")
+- **Reliable:** rounded vowels, soft consonants
+- **Technical:** hard consonants, Latin/Greek roots
+- **Friendly:** open vowels, soft sounds
+
+Example: Pentium mimicked scientific terms (sodium, uranium) via "-ium" suffix while remaining unexpected.
+
+#### Plosive Names
+Use "pop" consonants (B, D, K, P, T) for memorability
+- Kodak
+- TikTok
+
+#### Uncommon First Letters
+Differentiate via X, Z, Y, Q, K
+- Zephyr
+- Quora
+
+### Step 4: The Blacklist (Never Suggest)
+
+**Generic LLM slop:**
 - Forge, Apex, Velocity, Summit, Nexus, Vertex, Catalyst, Elevate
 - Quantum, Neural, Synapse, Cortex, Axon
 - Zenith, Pinnacle, Ascent, Rise, Uplift
 - Bolt, Flash, Rocket, Lightning, Surge
-- **Lumen, Aether, Veritas** - Latin/Greek cliches
-- Any word that sounds like "I typed 'AI company name' into ChatGPT"
+- Lumen, Aether, Veritas (Latin/Greek cliches)
 
-**Self-check before suggesting:**
+**Overused patterns:**
+- "-ify" endings (Shopify is fine, but it's been copied 1000x)
+- "-ly" endings (Grammarly clones)
+- "[Category] + AI" (DataAI, CodeAI)
+- Speed words
+- Height words
+- Building metaphors
+
+**Self-check:**
 - Would a human brand strategist laugh at this?
 - Is this a word-association result or a real insight?
-- Does this name tell a story or just sound modern?
-- **Would you want this on your business card?** (Aesthetic test)
-- **Does it sound beautiful when spoken aloud?** (Linguistic beauty)
-- **Is it elegant or industrial?** (Graft = ugly, Tessera = elegant)
+- Does this sound like "I typed 'AI company name' into ChatGPT"?
+- Does it sound beautiful when spoken aloud?
+- Is it elegant or industrial? (Graft = ugly, Tessera = elegant)
 
-### Step 3: Think Like a Brand Strategist (Not an LLM)
+### Step 5: Availability Checking (BEFORE Presenting)
 
-**STOP. Do not proceed to frameworks yet.**
-
-First, deeply understand the **actual problem being solved**:
-- What pain does this solve?
-- What's the emotional transformation?
-- What metaphor captures the essence of the work?
-
-**Example:**
-- Bad: "AI dev agency" → Lumen, Vertex, Nexus (generic)
-- Good: "Threading AI through legacy systems without disruption" → Graft, Weft, Seam (specific metaphors)
-
-**Ask yourself:**
-1. What **real-world objects or processes** mirror what this company does?
-2. What **existing words** already capture the feeling/transformation?
-3. What would a **human creative director** suggest if they couldn't use AI?
-
-**Now generate using these approaches:**
-
-#### A. Deep Metaphors with Aesthetic Beauty (BEST approach)
-
-Find objects/processes that mirror the value AND sound beautiful:
-
-**Good examples:**
-- **Tessera** - Tile in a mosaic (integration + elegant sound)
-- **Cadence** - Musical rhythm (harmony + flows beautifully)
-- **Volta** - Turn in a poem (transformation + lyrical)
-- **Noria** - Ancient water wheel (continuous motion + exotic beauty)
-- **Selvedge** - Finished edge of fabric (precision + sophisticated)
-
-**Bad examples (accurate but ugly):**
-- ❌ Graft - Sounds like construction
-- ❌ Weft - Harsh consonants
-- ❌ Seam - Industrial, not elegant
-- ❌ Patch - Too utilitarian
-
-**Domains to explore:**
-- Music: rhythm, harmony, improvisation, composition
-- Poetry: verse, stanza, volta, caesura
-- Art: mosaic, palette, canvas, pigment
-- Nature: river, delta, confluence, estuary
-- Architecture: arcade, colonnade, parapet, soffit
-- Textiles: damask, brocade, ikat, batik
-
-Generate 5 names that are:
-1. Meaningful metaphors (not word salad)
-2. Aesthetically beautiful (flows when spoken)
-3. Slightly esoteric (not obvious but discoverable)
-4. Professional yet elegant (not generic or industrial)
-
-#### B. Meaningful Portmanteaus
-Combine words that tell the story:
-- Good: Shopify (shop + simplify), Pinterest (pin + interest)
-- Bad: CodeAI, TechFlow, DataMind (lazy combinations)
-
-Only use if the combination reveals insight.
-
-#### C. Respellings (Use Sparingly)
-Only if the original word is perfect but taken:
-- Lyft (lift), Fiverr (fiver)
-- Must be instantly recognizable
-
-#### D. Invented Words (Last Resort)
-Only create if metaphors don't land:
-- Must be pronounceable first try
-- Should suggest meaning through sound
-- Test: would a human remember this?
-
-### Step 4: Generate AND Check Availability (Do NOT Skip This)
-
-**CRITICAL:** Do not present names to the user without checking availability first.
+**CRITICAL:** Do not present names to user without checking availability.
 
 **Process:**
-1. Generate 10-15 candidate names using the frameworks above
-2. Check ALL of them for availability BEFORE showing to user
-3. Only present names that pass all checks
+1. Generate 50-100 candidates using frameworks above
+2. Check ALL of them for availability
+3. Only present 3-5 names that pass all checks
 
-**For each candidate, check:**
+**For each candidate:**
 
 1. **Company existence** - Web search:
    ```
-   Search "[name] company AI tech 2026"
+   Search "[name] company tech 2026"
    ```
    If there's a funded startup, public company, or major product with this name, **discard immediately**.
 
-2. **Domain check** - Use Namecheap MCP:
+2. **Domain check** - Use Namecheap MCP if available:
    ```
    Check if [name].com, [name].io, [name].ai are available
    ```
@@ -144,99 +153,81 @@ Only create if metaphors don't land:
 
 3. **Twitter check** - Search:
    ```
-   Search "@[name]" twitter
+   Search "@[name] twitter"
    ```
    If handle is taken by an active tech account, flag it.
 
-**Only after filtering, present 3-5 names that:**
-- Pass company existence check (no major conflicts)
-- Have domains available (.ai or .io minimum)
-- Are elegant AND meaningful
-
 **If all names are taken:** Generate a new batch with more esoteric/unique words.
 
-### Step 5: Linguistic Tests
+### Step 6: Linguistic Tests
 
-For finalists, check:
+For finalists, verify:
 - **Pronunciation** - Say it out loud. Awkward? Ambiguous?
 - **Spelling** - Can someone spell it after hearing it once?
 - **Cultural issues** - Does it mean something bad in other languages?
 - **Length** - 2-3 syllables ideal, 4 max
+- **Sound symbolism** - Does it SOUND like what the brand should be?
 
-### Step 6: Present Recommendations
+### Step 7: Present Recommendations
 
 Show 3-5 final options with:
-- **Name** - The actual name
-- **Why it works** - Brief rationale (1 sentence)
-- **Availability** - Domains available, Twitter status
-- **Risks** - Any concerns (trademark, pronunciation, etc)
 
-Format:
 ```
 ## Top Recommendations
 
 ### 1. [Name]
-**Why:** [One sentence rationale]
-**Domains:** [name].com ✅ | [name].io ✅ | [name].ai ❌
-**Twitter:** @[name] available
-**Risks:** None identified
+**Technique:** [Visual/Expressive/Neologism/etc]
+**Why:** [One sentence rationale - the insight, not the description]
+**Sound:** [What it sounds like - fast/reliable/friendly/technical]
+**Availability:**
+- [name].com ✅ | [name].io ✅ | [name].ai ❌
+- @[name] on Twitter: available
+**Risks:** [Any concerns - trademark, pronunciation, cultural]
 
 ### 2. [Name]
 ...
 ```
 
-## Anti-Generic Rules
+## Example: Naming an AI Dev Agency
 
-**Never suggest names that:**
-- End in "-ify", "-ly", "-io" (overused patterns)
-- Use speed words (Fast, Quick, Rapid, Velocity, Bolt)
-- Use height words (Apex, Summit, Peak, Zenith)
-- Use forge/building metaphors (Forge, Build, Craft)
-- Are just "[category]" + "AI" (e.g., "CodeAI", "DataAI")
-- Sound like existing big tech (avoid anything close to Vercel, Supabase, etc)
+**Brief:** "AI dev agency that helps legacy companies ship AI features fast"
 
-**If you catch yourself suggesting these**, stop and use a different framework.
+**Diamond Framework:**
+1. What does winning look like? Trusted by F500 CTOs, known for speed + quality
+2. What do we have to win? Deep expertise threading AI through legacy systems
+3. What do we need to win? Name that signals both craft and speed
+4. What do we need to say? "We make AI integration seamless"
 
-## Example Session
+**Competitor audit:** Thoughtbot, Hashrocket, Test Double = metaphor-heavy, craft-focused
 
-**User:** "I need a name for an AI dev agency that helps legacy companies ship AI features fast."
+**Generation (aiming for 50+ candidates):**
+- Visual: Conduit, Loom, Weave, Thread, Catalyst (❌ blacklist)
+- Expressive: Seamless (too obvious), Flow, Current
+- Nature: River, Delta, Estuary
+- Sound symbolism (fast): Dasani-style crisp sounds
+- Neologisms: Combine "integrate" + something
+- Plosives: Need strong K/P/T sounds for memorability
 
-**Agent:**
-1. Asks: "What vibe - professional/enterprise or approachable? Any domain requirements?"
-2. Checks: What are other dev agencies called? (Thoughtbot, Hashrocket, etc - lots of metaphors)
-3. Generates:
-   - Portmanteaus: ShipMind, CodeCurrent
-   - Metaphors: Conduit, Tether, Stitch
-   - Made-up: Velza, Pixlo, Zephyr
-4. Checks availability for top 5
-5. Presents 3 finalists with reasoning
+**After generating 50+, check availability for top 20, present 3-5 that pass.**
 
-## Tools to Use
+## Tools
 
-- **Namecheap MCP** (`/setup-namecheap-mcp` if not installed) - Domain checks
-- **WebSearch** - Trademark checks, Twitter checks, competitor audit
-- **WebFetch** - If need to scrape competitor lists
+- **WebSearch** - Company conflicts, competitor audit, Twitter handles
+- **Namecheap MCP** - Domain availability (if configured)
+- **WebFetch** - Scrape competitor lists if needed
 
-## Internal Use vs Public
+## Quality Standards
 
-**For internal use now:**
-- Keep it simple, fast
-- Focus on avoiding generics
-- Manual checks are fine
+- Quantity first: Generate 50-100 before filtering
+- Avoid LLM autopilot: No Forge/Apex/Lumen
+- Sound symbolism: Does it SOUND right?
+- Trust + imagination: Familiar components, fresh combinations
+- Original idea: Never describe, always evoke
+- Accessibility: Brain-friendly, pronounceable
+- Availability: Check BEFORE presenting
+- 3-5 finalists only: Quality over quantity
 
-**Future public version:**
-- Add comprehensive trademark API
-- Bulk domain checking
-- Social handle checks across platforms
-- Export report as PDF
-- Could be a paid service ($29 for a naming report?)
+## Sources
 
-## Notes
-
-This skill works best when:
-- You understand the positioning first
-- You avoid first-pass AI suggestions
-- You check real availability
-- You give 3-5 options, not 20
-
-Quality over quantity.
+- [How to find the perfect name - David Placek (Lenny's Newsletter)](https://www.lennysnewsletter.com/p/how-to-find-the-perfect-name)
+- [Brand Naming Toolkit - Martin Roll](https://martinroll.com/resources/articles/branding/brand-naming-techniques/)
