@@ -46,6 +46,9 @@ Flag patterns like:
 - Would a human brand strategist laugh at this?
 - Is this a word-association result or a real insight?
 - Does this name tell a story or just sound modern?
+- **Would you want this on your business card?** (Aesthetic test)
+- **Does it sound beautiful when spoken aloud?** (Linguistic beauty)
+- **Is it elegant or industrial?** (Graft = ugly, Tessera = elegant)
 
 ### Step 3: Think Like a Brand Strategist (Not an LLM)
 
@@ -67,16 +70,36 @@ First, deeply understand the **actual problem being solved**:
 
 **Now generate using these approaches:**
 
-#### A. Deep Metaphors (BEST approach)
-Find objects/processes that mirror the value:
-- **Graft** - Adding new growth to established systems
-- **Riff** - Jazz improvisation on existing melodies
-- **Weft** - Threads that integrate into existing fabric
-- **Patch** - Software/quilting term for adding without replacing
-- **Seam** - Where old meets new
+#### A. Deep Metaphors with Aesthetic Beauty (BEST approach)
 
-Think: farming, music, textiles, architecture, cooking, biology.
-Generate 5 metaphor names with **real meaning**, not word salad.
+Find objects/processes that mirror the value AND sound beautiful:
+
+**Good examples:**
+- **Tessera** - Tile in a mosaic (integration + elegant sound)
+- **Cadence** - Musical rhythm (harmony + flows beautifully)
+- **Volta** - Turn in a poem (transformation + lyrical)
+- **Noria** - Ancient water wheel (continuous motion + exotic beauty)
+- **Selvedge** - Finished edge of fabric (precision + sophisticated)
+
+**Bad examples (accurate but ugly):**
+- ❌ Graft - Sounds like construction
+- ❌ Weft - Harsh consonants
+- ❌ Seam - Industrial, not elegant
+- ❌ Patch - Too utilitarian
+
+**Domains to explore:**
+- Music: rhythm, harmony, improvisation, composition
+- Poetry: verse, stanza, volta, caesura
+- Art: mosaic, palette, canvas, pigment
+- Nature: river, delta, confluence, estuary
+- Architecture: arcade, colonnade, parapet, soffit
+- Textiles: damask, brocade, ikat, batik
+
+Generate 5 names that are:
+1. Meaningful metaphors (not word salad)
+2. Aesthetically beautiful (flows when spoken)
+3. Slightly esoteric (not obvious but discoverable)
+4. Professional yet elegant (not generic or industrial)
 
 #### B. Meaningful Portmanteaus
 Combine words that tell the story:
