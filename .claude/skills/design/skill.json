@@ -1,0 +1,21 @@
+{
+  "name": "design",
+  "triggers": [
+    "design feedback",
+    "design review",
+    "ui review",
+    "ux review",
+    "design audit",
+    "design critique",
+    "design this",
+    "improve design",
+    "design help",
+    "ui/ux",
+    "user experience",
+    "interface design",
+    "visual design",
+    "design principles",
+    "design anti-patterns"
+  ],
+  "description": "Expert design feedback and UI/UX review based on Impeccable principles. Provides actionable critiques on typography, color, spatial design, motion, interaction patterns, responsive design, and UX writing. Identifies anti-patterns and offers concrete improvements for creating polished, professional interfaces."
+}
