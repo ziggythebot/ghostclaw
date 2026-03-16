@@ -237,7 +237,7 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
       logger.info({ group: group.name }, `Agent output: ${raw.slice(0, 200)}`);
       if (text) {
         clearInterval(typingInterval);
-        await channel.sendMessage(chatJid, text, hasVoiceMessage);
+        await channel.sendMessage(chatJid, text, false); // Disabled voice replies
         outputSentToUser = true;
       }
       // Only reset idle timer on actual results, not session-update markers (result: null)
