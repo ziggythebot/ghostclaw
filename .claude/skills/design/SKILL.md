@@ -54,7 +54,28 @@ If no anti-patterns are found (or the user requests it), the skill loads the ful
 
 ## Commands
 
-This skill provides 12 commands for different review contexts:
+This skill provides 13 commands for different review contexts:
+
+### 0. `/design-init` - Initialize Design Configuration
+Create project-level design configuration files (`.design.json` and `.design.md`).
+
+**Usage:**
+```
+/design-init [directory]
+```
+
+**What it does:**
+- Creates `.design.json` with design system rules (fonts, colors, spacing, typography)
+- Creates `.design.md` with project context and design philosophy
+- Offers templates: Minimal starter, Emergence example, Velocity example
+- Interactive setup for custom configurations
+
+**Next steps after init:**
+- Edit `.design.md` to add project context
+- Run `/design-rules` to view current config
+- Run `/design-audit [file]` to check compliance
+
+---
 
 ### 1. `/design-page` - Full Page Review
 Review an entire page (landing page, dashboard, settings page, etc.) with both layers.
