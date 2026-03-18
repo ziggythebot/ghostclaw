@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.5.5 (2026-03-18) — Remote control hotfix
+
+### Fixes
+- `/reset` now clears the pending task and message queue, not just kills the current agent. Previously, resetting would immediately drain the next queued item, making it impossible to stop a runaway queue remotely.
+- `/reset` reply updated to confirm both kill and queue clear.
+
+### New
+- `/update` command: pulls latest code from git, rebuilds, and restarts via launchd. Allows remote updates over Telegram without SSH access. This is a bootstrapped command — requires one manual `git pull && npm run build` to get it onto a running instance, after which all future updates can be done via Telegram.
+
 ## v0.5.0 (2026-03-04) — Public Beta
 
 First public beta release. GhostClaw is feature-complete and ready for testing.
