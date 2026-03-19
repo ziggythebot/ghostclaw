@@ -10,6 +10,8 @@ const envConfig = readEnvFile([
   'ASSISTANT_HAS_OWN_NUMBER',
   'TELEGRAM_BOT_TOKEN',
   'TELEGRAM_ONLY',
+  'AGENT_IDLE_TIMEOUT',
+  'AGENT_ABSOLUTE_TIMEOUT',
 ]);
 
 export const ASSISTANT_NAME =
@@ -43,12 +45,14 @@ export const IDLE_TIMEOUT = parseInt(process.env.IDLE_TIMEOUT || '1800000', 10);
 // Agent process timeouts (two independent timers in container-runner)
 // Idle: reset on any stdout activity. Agent with no stdout for this long is stuck → kill.
 export const AGENT_IDLE_TIMEOUT = parseInt(
-  process.env.AGENT_IDLE_TIMEOUT || '600000',
+  process.env.AGENT_IDLE_TIMEOUT || envConfig.AGENT_IDLE_TIMEOUT || '600000',
   10,
 ); // 10 min default
 // Absolute: never resets. Hard ceiling regardless of any activity.
 export const AGENT_ABSOLUTE_TIMEOUT = parseInt(
-  process.env.AGENT_ABSOLUTE_TIMEOUT || '2700000',
+  process.env.AGENT_ABSOLUTE_TIMEOUT ||
+    envConfig.AGENT_ABSOLUTE_TIMEOUT ||
+    '2700000',
   10,
 ); // 45 min default
 export const MAX_CONCURRENT_CONTAINERS = Math.max(
