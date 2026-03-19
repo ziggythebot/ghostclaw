@@ -1,6 +1,7 @@
 import { Bot, InputFile } from 'grammy';
 import path from 'path';
 import fs from 'fs';
+import { execSync } from 'child_process';
 
 import { ASSISTANT_NAME, TRIGGER_PATTERN } from '../config.js';
 import { logger } from '../logger.js';
@@ -56,7 +57,7 @@ export class TelegramChannel implements Channel {
       ctx.reply(`${ASSISTANT_NAME} is online.`);
     });
 
-    // Command to force-kill a stalled agent and start fresh
+    // Command to force-kill a stalled agent, clear the queue, and start fresh
     this.bot.command('reset', (ctx) => {
       const chatJid = `tg:${ctx.chat.id}`;
       const group = this.opts.registeredGroups()[chatJid];
@@ -64,11 +65,35 @@ export class TelegramChannel implements Channel {
         ctx.reply('Not a registered chat.');
         return;
       }
-      const killed = this.opts.onReset?.(chatJid) ?? false;
-      if (killed) {
-        ctx.reply('Reset. Agent killed — send me something to start fresh.');
-      } else {
-        ctx.reply('Nothing running. Send me something to start.');
+      this.opts.onReset?.(chatJid);
+      ctx.reply('Reset. Agent killed and queue cleared — send me something to start fresh.');
+    });
+
+    // Command to pull latest code and restart
+    this.bot.command('update', async (ctx) => {
+      const chatJid = `tg:${ctx.chat.id}`;
+      const group = this.opts.registeredGroups()[chatJid];
+      if (!group) {
+        ctx.reply('Not a registered chat.');
+        return;
+      }
+
+      await ctx.reply('Pulling latest code...');
+      const cwd = process.cwd();
+
+      try {
+        const pullOut = execSync('git pull', { cwd, encoding: 'utf-8' });
+        await ctx.reply(`git pull: ${pullOut.trim()}`);
+
+        await ctx.reply('Building...');
+        execSync('npm run build', { cwd, encoding: 'utf-8', timeout: 120_000 });
+
+        await ctx.reply('Done. Restarting — back in a moment.');
+        setTimeout(() => process.exit(0), 500);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        await ctx.reply(`Update failed:\n${msg.slice(0, 500)}`);
+        logger.error({ err }, '/update command failed');
       }
     });
 
@@ -87,15 +112,11 @@ export class TelegramChannel implements Channel {
       const sender = ctx.from?.id.toString() || '';
       const msgId = ctx.message.message_id.toString();
 
-      // Determine chat name
       const chatName =
         ctx.chat.type === 'private'
           ? senderName
           : (ctx.chat as any).title || chatJid;
 
-      // Translate Telegram @bot_username mentions into TRIGGER_PATTERN format.
-      // Telegram @mentions (e.g., @andy_ai_bot) won't match TRIGGER_PATTERN
-      // (e.g., ^@Andy\b), so we prepend the trigger when the bot is @mentioned.
       const botUsername = ctx.me?.username?.toLowerCase();
       if (botUsername) {
         const entities = ctx.message.entities || [];
@@ -113,7 +134,6 @@ export class TelegramChannel implements Channel {
         }
       }
 
-      // Store chat metadata for discovery
       const isGroup =
         ctx.chat.type === 'group' || ctx.chat.type === 'supergroup';
       this.opts.onChatMetadata(
@@ -124,7 +144,6 @@ export class TelegramChannel implements Channel {
         isGroup,
       );
 
-      // Only deliver full message for registered groups
       const group = this.opts.registeredGroups()[chatJid];
       if (!group) {
         logger.debug(
@@ -134,7 +153,6 @@ export class TelegramChannel implements Channel {
         return;
       }
 
-      // Deliver message — startMessageLoop() will pick it up
       this.opts.onMessage(chatJid, {
         id: msgId,
         chat_jid: chatJid,
@@ -152,7 +170,6 @@ export class TelegramChannel implements Channel {
       );
     });
 
-    // Handle non-text messages with placeholders so the agent knows something was sent
     const storeNonText = (ctx: any, placeholder: string) => {
       const chatJid = `tg:${ctx.chat.id}`;
       const group = this.opts.registeredGroups()[chatJid];
@@ -191,19 +208,16 @@ export class TelegramChannel implements Channel {
       const chatJid = `tg:${ctx.chat.id}`;
       const group = this.opts.registeredGroups()[chatJid];
 
-      // Download and save photo
       let placeholder = '[Photo]';
       try {
         const photos = ctx.message.photo;
-        const largestPhoto = photos[photos.length - 1]; // Get highest resolution
+        const largestPhoto = photos[photos.length - 1];
         const file = await ctx.api.getFile(largestPhoto.file_id);
         const url = `https://api.telegram.org/file/bot${this.botToken}/${file.file_path}`;
 
-        // Create media directory if needed
         const mediaDir = path.join(process.cwd(), 'data', 'telegram-media');
         await fs.promises.mkdir(mediaDir, { recursive: true });
 
-        // Download photo
         const resp = await fetch(url);
         if (resp.ok) {
           const buffer = Buffer.from(await resp.arrayBuffer());
@@ -218,9 +232,7 @@ export class TelegramChannel implements Channel {
             'Downloaded Telegram photo',
           );
 
-          // Also save to Desktop for easy access
           if (chatJid === 'tg:414798121') {
-            // Main chat
             const desktopPath = path.join(
               process.env.HOME || '',
               'Desktop',
@@ -280,12 +292,10 @@ export class TelegramChannel implements Channel {
     this.bot.on('message:location', (ctx) => storeNonText(ctx, '[Location]'));
     this.bot.on('message:contact', (ctx) => storeNonText(ctx, '[Contact]'));
 
-    // Handle errors gracefully
     this.bot.catch((err) => {
       logger.error({ err: err.message }, 'Telegram bot error');
     });
 
-    // Start polling — returns a Promise that resolves when started
     return new Promise<void>((resolve) => {
       this.bot!.start({
         onStart: (botInfo) => {
@@ -316,7 +326,6 @@ export class TelegramChannel implements Channel {
     try {
       const numericId = jid.replace(/^tg:/, '');
 
-      // Send as voice note if replying to a voice message
       if (voiceReply) {
         logger.info({ jid }, 'Attempting voice reply via TTS');
         const audioBuffer = await textToSpeech(text);
@@ -333,17 +342,14 @@ export class TelegramChannel implements Channel {
         }
       }
 
-      // Convert markdown to Telegram HTML so bold, italic, code etc. render
       const html = markdownToTelegramHtml(text);
 
-      // Telegram has a 4096 character limit per message — split if needed
       const MAX_LENGTH = 4096;
       if (html.length <= MAX_LENGTH) {
         await this.bot.api.sendMessage(numericId, html, {
           parse_mode: 'HTML',
         });
       } else {
-        // Split on newlines, closing/reopening HTML tags across chunk boundaries
         const chunks: string[] = [];
         let current = '';
         const TELEGRAM_TAGS = ['pre', 'code', 'b', 'i', 'u', 's', 'a'];
@@ -358,13 +364,11 @@ export class TelegramChannel implements Channel {
         }
         if (current) chunks.push(current);
 
-        // Fix unclosed tags in each chunk
         const fixedChunks: string[] = [];
-        let carryTags: string[] = []; // tags to reopen in next chunk
+        let carryTags: string[] = [];
         for (const chunk of chunks) {
           let fixed = carryTags.map((t) => `<${t}>`).join('') + chunk;
 
-          // Track which tags are open at the end of this chunk
           const openTags: string[] = [];
           for (const tag of TELEGRAM_TAGS) {
             const opens = (
@@ -377,7 +381,6 @@ export class TelegramChannel implements Channel {
             }
           }
 
-          // Close any unclosed tags at end of this chunk (reverse order)
           carryTags = [...openTags];
           for (const tag of [...openTags].reverse()) {
             fixed += `</${tag}>`;
