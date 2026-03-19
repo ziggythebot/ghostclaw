@@ -358,6 +358,7 @@ export async function runContainerAgent(
     });
 
     let timedOut = false;
+    let timeoutReason: 'idle' | 'absolute' | null = null;
     let hadStreamingOutput = false;
     const configTimeout = group.containerConfig?.timeout || CONTAINER_TIMEOUT;
     const idleTimeoutMs = Math.min(
@@ -368,6 +369,7 @@ export async function runContainerAgent(
 
     const killOnTimeout = (reason: 'idle' | 'absolute') => {
       timedOut = true;
+      timeoutReason = reason;
       logger.error(
         { group: group.name, processName, reason },
         reason === 'idle'
@@ -414,10 +416,17 @@ export async function runContainerAgent(
           ].join('\n'),
         );
 
+        const timeoutMs =
+          timeoutReason === 'idle' ? idleTimeoutMs : absoluteTimeoutMs;
+        const timeoutLabel =
+          timeoutReason === 'idle'
+            ? `idle timeout (${idleTimeoutMs}ms no stdout)`
+            : `absolute timeout (${absoluteTimeoutMs}ms ceiling)`;
+
         if (hadStreamingOutput) {
           logger.info(
-            { group: group.name, processName, duration, code },
-            'Agent timed out after output (idle cleanup)',
+            { group: group.name, processName, duration, code, timeoutReason },
+            `Agent timed out after output (${timeoutLabel})`,
           );
           outputChain.then(() => {
             resolve({
@@ -430,14 +439,14 @@ export async function runContainerAgent(
         }
 
         logger.error(
-          { group: group.name, processName, duration, code },
-          'Agent timed out with no output',
+          { group: group.name, processName, duration, code, timeoutReason },
+          `Agent timed out with no output (${timeoutLabel})`,
         );
 
         resolve({
           status: 'error',
           result: null,
-          error: `Agent timed out after ${configTimeout}ms`,
+          error: `Agent timed out after ${timeoutMs}ms (${timeoutLabel})`,
         });
         return;
       }
