@@ -44,7 +44,7 @@ jobs:
   # ── Step 2: Auto-fix and create PR ────────────────────────────────────
   fix-drift:
     needs: validate
-    if: needs.validate.outputs.drifted == 'true'
+    if: needs.validate.outputs.drifted == 'true' && secrets.APP_ID != ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/create-github-app-token@v1

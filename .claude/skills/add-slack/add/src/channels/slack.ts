@@ -101,7 +101,7 @@ export class SlackChannel implements Channel {
         senderName = ASSISTANT_NAME;
       } else {
         senderName =
-          (await this.resolveUserName(msg.user)) ||
+          (msg.user ? await this.resolveUserName(msg.user) : undefined) ||
           msg.user ||
           'unknown';
       }
