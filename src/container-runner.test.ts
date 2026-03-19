@@ -14,6 +14,8 @@ vi.mock('./config.js', () => ({
   DATA_DIR: '/tmp/ghostclaw-test-data',
   GROUPS_DIR: '/tmp/ghostclaw-test-groups',
   IDLE_TIMEOUT: 1800000, // 30min
+  AGENT_IDLE_TIMEOUT: 5000, // 5s in tests
+  AGENT_ABSOLUTE_TIMEOUT: 10000, // 10s in tests
   TIMEZONE: 'America/Los_Angeles',
 }));
 
@@ -116,7 +118,7 @@ describe('container-runner timeout behavior', () => {
     vi.useRealTimers();
   });
 
-  it('timeout after output resolves as success', async () => {
+  it('absolute timeout after output resolves as error', async () => {
     const onOutput = vi.fn(async () => {});
     const resultPromise = runContainerAgent(
       testGroup,
@@ -125,7 +127,7 @@ describe('container-runner timeout behavior', () => {
       onOutput,
     );
 
-    // Emit output with a result
+    // Emit output with a result (also resets idle timer via stdout data)
     emitOutputMarker(fakeProc, {
       status: 'success',
       result: 'Here is my response',
@@ -135,24 +137,24 @@ describe('container-runner timeout behavior', () => {
     // Let output processing settle
     await vi.advanceTimersByTimeAsync(10);
 
-    // Fire the hard timeout (IDLE_TIMEOUT + 30s = 1830000ms)
-    await vi.advanceTimersByTimeAsync(1830000);
+    // Fire the absolute ceiling (AGENT_ABSOLUTE_TIMEOUT = 10000ms in tests)
+    await vi.advanceTimersByTimeAsync(10000);
 
-    // Emit close event (as if container was stopped by the timeout)
+    // Emit close event (as if process was stopped by the timeout)
     fakeProc.emit('close', 137);
 
-    // Let the promise resolve
     await vi.advanceTimersByTimeAsync(10);
 
     const result = await resultPromise;
-    expect(result.status).toBe('success');
-    expect(result.newSessionId).toBe('session-123');
+    // Timeout always resolves as error — index.ts outputSentToUser guard prevents cursor rollback
+    expect(result.status).toBe('error');
+    expect(result.error).toContain('timed out');
     expect(onOutput).toHaveBeenCalledWith(
       expect.objectContaining({ result: 'Here is my response' }),
     );
   });
 
-  it('timeout with no output resolves as error', async () => {
+  it('idle timeout with no stdout resolves as error', async () => {
     const onOutput = vi.fn(async () => {});
     const resultPromise = runContainerAgent(
       testGroup,
@@ -161,18 +163,42 @@ describe('container-runner timeout behavior', () => {
       onOutput,
     );
 
-    // No output emitted — fire the hard timeout
-    await vi.advanceTimersByTimeAsync(1830000);
+    // No stdout at all — fire the idle timeout (AGENT_IDLE_TIMEOUT = 5000ms in tests)
+    await vi.advanceTimersByTimeAsync(5000);
 
-    // Emit close event
     fakeProc.emit('close', 137);
-
     await vi.advanceTimersByTimeAsync(10);
 
     const result = await resultPromise;
     expect(result.status).toBe('error');
     expect(result.error).toContain('timed out');
     expect(onOutput).not.toHaveBeenCalled();
+  });
+
+  it('stdout activity resets idle timer', async () => {
+    const onOutput = vi.fn(async () => {});
+    const resultPromise = runContainerAgent(
+      testGroup,
+      testInput,
+      () => {},
+      onOutput,
+    );
+
+    // Emit raw stdout at 4s — just before idle timeout (5s in tests)
+    await vi.advanceTimersByTimeAsync(4000);
+    fakeProc.stdout.push('thinking...\n');
+
+    // Idle timer should have reset — advance another 4s (total 8s, but idle only 4s since last stdout)
+    await vi.advanceTimersByTimeAsync(4000);
+
+    // Agent hasn't timed out yet — now emit proper output and close normally
+    emitOutputMarker(fakeProc, { status: 'success', result: 'Done' });
+    await vi.advanceTimersByTimeAsync(10);
+    fakeProc.emit('close', 0);
+    await vi.advanceTimersByTimeAsync(10);
+
+    const result = await resultPromise;
+    expect(result.status).toBe('success');
   });
 
   it('normal exit after output resolves as success', async () => {

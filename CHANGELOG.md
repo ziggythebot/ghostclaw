@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.6.1 (2026-03-19) — Dual timeout for stuck agents
+
+### Fixes
+- **Dual agent timeout** replaces the old single 30-min timer:
+  - **Idle timeout** (10 min default, `AGENT_IDLE_TIMEOUT` env var): reset on any stdout activity. An agent that produces no output for 10 minutes is considered stuck and killed. This catches the "hung waiting on API" case that was causing 30-40 min hangs.
+  - **Absolute ceiling** (45 min default, `AGENT_ABSOLUTE_TIMEOUT` env var): never resets, regardless of any activity. Hard cap for runaway agents producing garbage output.
+- Both timeouts log their reason (`idle` vs `absolute`) to make post-mortems easier.
+
 ## v0.6.0 (2026-03-19) — Reliability + remote control
 
 ### Fixes

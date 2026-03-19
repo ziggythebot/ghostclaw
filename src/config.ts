@@ -39,6 +39,18 @@ export const CONTAINER_MAX_OUTPUT_SIZE = parseInt(
 ); // 10MB default
 export const IPC_POLL_INTERVAL = 1000;
 export const IDLE_TIMEOUT = parseInt(process.env.IDLE_TIMEOUT || '1800000', 10); // 30min default — how long to keep container alive after last result
+
+// Agent process timeouts (two independent timers in container-runner)
+// Idle: reset on any stdout activity. Agent with no stdout for this long is stuck → kill.
+export const AGENT_IDLE_TIMEOUT = parseInt(
+  process.env.AGENT_IDLE_TIMEOUT || '600000',
+  10,
+); // 10 min default
+// Absolute: never resets. Hard ceiling regardless of any activity.
+export const AGENT_ABSOLUTE_TIMEOUT = parseInt(
+  process.env.AGENT_ABSOLUTE_TIMEOUT || '2700000',
+  10,
+); // 45 min default
 export const MAX_CONCURRENT_CONTAINERS = Math.max(
   1,
   parseInt(process.env.MAX_CONCURRENT_CONTAINERS || '5', 10) || 5,

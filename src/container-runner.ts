@@ -7,11 +7,12 @@ import fs from 'fs';
 import path from 'path';
 
 import {
+  AGENT_ABSOLUTE_TIMEOUT,
+  AGENT_IDLE_TIMEOUT,
   CONTAINER_MAX_OUTPUT_SIZE,
   CONTAINER_TIMEOUT,
   DATA_DIR,
   GROUPS_DIR,
-  IDLE_TIMEOUT,
 } from './config.js';
 import { readEnvFile } from './env.js';
 import { resolveGroupFolderPath, resolveGroupIpcPath } from './group-folder.js';
@@ -291,6 +292,7 @@ export async function runContainerAgent(
 
     agentProcess.stdout.on('data', (data) => {
       const chunk = data.toString();
+      resetIdleTimer();
 
       if (!stdoutTruncated) {
         const remaining = CONTAINER_MAX_OUTPUT_SIZE - stdout.length;
@@ -324,7 +326,6 @@ export async function runContainerAgent(
               newSessionId = parsed.newSessionId;
             }
             hadStreamingOutput = true;
-            resetTimeout();
             outputChain = outputChain.then(() => onOutput(parsed));
           } catch (err) {
             logger.warn(
@@ -357,33 +358,53 @@ export async function runContainerAgent(
     });
 
     let timedOut = false;
+    let timeoutReason: 'idle' | 'absolute' | null = null;
     let hadStreamingOutput = false;
     const configTimeout = group.containerConfig?.timeout || CONTAINER_TIMEOUT;
-    const timeoutMs = Math.max(configTimeout, IDLE_TIMEOUT + 30_000);
+    const absoluteTimeoutMs = Math.min(configTimeout, AGENT_ABSOLUTE_TIMEOUT);
+    const idleTimeoutMs = Math.min(AGENT_IDLE_TIMEOUT, absoluteTimeoutMs);
 
-    const killOnTimeout = () => {
+    let timeoutHandled = false;
+    const killOnTimeout = (reason: 'idle' | 'absolute') => {
+      if (timeoutHandled) return;
+      timeoutHandled = true;
       timedOut = true;
+      timeoutReason = reason;
       logger.error(
-        { group: group.name, processName },
-        'Agent timeout, killing process',
+        { group: group.name, processName, reason },
+        reason === 'idle'
+          ? 'Agent idle timeout — no stdout for too long, killing process'
+          : 'Agent absolute timeout — hard ceiling reached, killing process',
       );
       agentProcess.kill('SIGTERM');
+      agentProcess.once('close', () => {
+        // Process already dead, nothing more to do
+      });
       setTimeout(() => {
-        if (!agentProcess.killed) {
+        try {
           agentProcess.kill('SIGKILL');
+        } catch {
+          // already dead
         }
       }, 15000);
     };
 
-    let timeout = setTimeout(killOnTimeout, timeoutMs);
-
-    const resetTimeout = () => {
-      clearTimeout(timeout);
-      timeout = setTimeout(killOnTimeout, timeoutMs);
+    // Idle timer — reset on any stdout activity
+    let idleTimer = setTimeout(() => killOnTimeout('idle'), idleTimeoutMs);
+    const resetIdleTimer = () => {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => killOnTimeout('idle'), idleTimeoutMs);
     };
 
+    // Absolute ceiling — never resets
+    const absoluteTimer = setTimeout(
+      () => killOnTimeout('absolute'),
+      absoluteTimeoutMs,
+    );
+
     agentProcess.on('close', (code) => {
-      clearTimeout(timeout);
+      clearTimeout(idleTimer);
+      clearTimeout(absoluteTimer);
       const duration = Date.now() - startTime;
 
       if (timedOut) {
@@ -402,30 +423,32 @@ export async function runContainerAgent(
           ].join('\n'),
         );
 
-        if (hadStreamingOutput) {
-          logger.info(
-            { group: group.name, processName, duration, code },
-            'Agent timed out after output (idle cleanup)',
-          );
-          outputChain.then(() => {
-            resolve({
-              status: 'success',
-              result: null,
-              newSessionId,
-            });
-          });
-          return;
-        }
+        const timeoutMs =
+          timeoutReason === 'idle' ? idleTimeoutMs : absoluteTimeoutMs;
+        const timeoutLabel =
+          timeoutReason === 'idle'
+            ? `idle timeout (${idleTimeoutMs}ms no stdout)`
+            : `absolute timeout (${absoluteTimeoutMs}ms ceiling)`;
 
         logger.error(
-          { group: group.name, processName, duration, code },
-          'Agent timed out with no output',
+          {
+            group: group.name,
+            processName,
+            duration,
+            code,
+            timeoutReason,
+            hadStreamingOutput,
+          },
+          `Agent timed out (${timeoutLabel})`,
         );
 
-        resolve({
-          status: 'error',
-          result: null,
-          error: `Agent timed out after ${configTimeout}ms`,
+        outputChain.then(() => {
+          resolve({
+            status: 'error',
+            result: null,
+            error: `Agent timed out after ${timeoutMs}ms (${timeoutLabel})`,
+            newSessionId,
+          });
         });
         return;
       }
@@ -557,7 +580,8 @@ export async function runContainerAgent(
     });
 
     agentProcess.on('error', (err) => {
-      clearTimeout(timeout);
+      clearTimeout(idleTimer);
+      clearTimeout(absoluteTimer);
       logger.error(
         { group: group.name, processName, error: err },
         'Agent spawn error',
