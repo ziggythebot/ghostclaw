@@ -54,6 +54,7 @@ let sessions: Record<string, string> = {};
 let registeredGroups: Record<string, RegisteredGroup> = {};
 let lastAgentTimestamp: Record<string, string> = {};
 let messageLoopRunning = false;
+const startTime = Date.now();
 
 let whatsapp: WhatsAppChannel;
 const channels: Channel[] = [];
@@ -307,8 +308,13 @@ async function runAgent(
         isMain,
         assistantName: ASSISTANT_NAME,
       },
-      (proc, containerName) =>
-        queue.registerProcess(chatJid, proc, containerName, group.folder),
+      (proc, containerName) => {
+        queue.registerProcess(chatJid, proc, containerName, group.folder);
+        if (proc.pid) {
+          trackAgentPid(proc.pid);
+          proc.once('exit', () => untrackAgentPid(proc.pid!));
+        }
+      },
       wrappedOnOutput,
     );
 
@@ -481,8 +487,62 @@ function releasePidLock(): void {
   }
 }
 
+const agentPidsFile = path.join(DATA_DIR, 'agent-pids.json');
+
+function readAgentPids(): number[] {
+  try {
+    return JSON.parse(fs.readFileSync(agentPidsFile, 'utf-8'));
+  } catch {
+    return [];
+  }
+}
+
+function writeAgentPids(pids: number[]): void {
+  try {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(agentPidsFile, JSON.stringify(pids));
+  } catch {
+    /* ignore */
+  }
+}
+
+function trackAgentPid(pid: number): void {
+  const pids = readAgentPids();
+  if (!pids.includes(pid)) {
+    pids.push(pid);
+    writeAgentPids(pids);
+  }
+}
+
+function untrackAgentPid(pid: number): void {
+  const pids = readAgentPids().filter((p) => p !== pid);
+  writeAgentPids(pids);
+}
+
+function cleanupOrphanedAgents(): void {
+  const pids = readAgentPids();
+  if (pids.length === 0) return;
+
+  let killed = 0;
+  for (const pid of pids) {
+    try {
+      process.kill(pid, 0); // throws if dead
+      process.kill(pid, 'SIGKILL');
+      killed++;
+      logger.warn({ pid }, 'Killed orphaned agent process from previous run');
+    } catch {
+      /* already dead */
+    }
+  }
+  writeAgentPids([]);
+  if (killed > 0) {
+    logger.info({ killed }, 'Orphan agent cleanup complete');
+  }
+}
+
 async function main(): Promise<void> {
   acquirePidLock();
+  cleanupOrphanedAgents();
 
   const errorsLog = path.join(process.cwd(), 'logs', 'errors.log');
   try {
@@ -530,6 +590,38 @@ async function main(): Promise<void> {
     onReset: (chatJid: string) => {
       queue.clearQueue(chatJid);
       return queue.killAgent(chatJid);
+    },
+    onGetStatus: () => {
+      const status = queue.getStatus();
+      const uptimeMs = Date.now() - startTime;
+      const uptimeMin = Math.floor(uptimeMs / 60000);
+      const uptimeHr = Math.floor(uptimeMin / 60);
+      const uptime =
+        uptimeHr > 0
+          ? `${uptimeHr}h ${uptimeMin % 60}m`
+          : `${uptimeMin}m`;
+
+      const lines = [
+        `<b>GhostClaw status</b>`,
+        `Uptime: ${uptime}`,
+        `Active agents: ${status.active}`,
+        `Waiting groups: ${status.waiting}`,
+      ];
+
+      if (status.groups.length > 0) {
+        lines.push('');
+        for (const g of status.groups) {
+          const group = registeredGroups[g.jid];
+          const name = group?.name || g.jid;
+          const parts: string[] = [];
+          if (g.active) parts.push('running');
+          if (g.queuedTasks > 0) parts.push(`${g.queuedTasks} task(s) queued`);
+          if (g.queuedMessages) parts.push('messages queued');
+          lines.push(`• ${name}: ${parts.join(', ')}`);
+        }
+      }
+
+      return lines.join('\n');
     },
   };
 

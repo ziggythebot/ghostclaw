@@ -20,6 +20,7 @@ export interface TelegramChannelOpts {
   onChatMetadata: OnChatMetadata;
   registeredGroups: () => Record<string, RegisteredGroup>;
   onReset?: (chatJid: string) => boolean;
+  onGetStatus?: () => string;
 }
 
 export class TelegramChannel implements Channel {
@@ -94,6 +95,62 @@ export class TelegramChannel implements Channel {
         const msg = err instanceof Error ? err.message : String(err);
         await ctx.reply(`Update failed:\n${msg.slice(0, 500)}`);
         logger.error({ err }, '/update command failed');
+      }
+    });
+
+    // Command to show active agents, queue depth, and uptime
+    this.bot.command('status', (ctx) => {
+      const chatJid = `tg:${ctx.chat.id}`;
+      const group = this.opts.registeredGroups()[chatJid];
+      if (!group) {
+        ctx.reply('Not a registered chat.');
+        return;
+      }
+      const text = this.opts.onGetStatus?.() ?? 'Status unavailable.';
+      ctx.reply(text, { parse_mode: 'HTML' });
+    });
+
+    // Command to list installed skills
+    this.bot.command('skills', (ctx) => {
+      const chatJid = `tg:${ctx.chat.id}`;
+      const group = this.opts.registeredGroups()[chatJid];
+      if (!group) {
+        ctx.reply('Not a registered chat.');
+        return;
+      }
+      const skillsDir = path.join(process.cwd(), '.claude', 'skills');
+      if (!fs.existsSync(skillsDir)) {
+        ctx.reply('No skills directory found.');
+        return;
+      }
+      const lines: string[] = ['<b>Installed skills:</b>'];
+      const dirs = fs.readdirSync(skillsDir).sort();
+      for (const dir of dirs) {
+        const stat = fs.statSync(path.join(skillsDir, dir));
+        if (!stat.isDirectory()) continue;
+        const skillMd = path.join(skillsDir, dir, 'SKILL.md');
+        if (!fs.existsSync(skillMd)) continue;
+        const content = fs.readFileSync(skillMd, 'utf-8');
+        const descMatch = content.match(/^description:\s*(.+)$/m);
+        const desc = descMatch ? descMatch[1].trim() : '';
+        lines.push(`• <code>/${dir}</code>${desc ? ` — ${desc.slice(0, 80)}` : ''}`);
+      }
+      const text = lines.length > 1 ? lines.join('\n') : 'No skills installed.';
+      // Chunk if needed — Telegram 4096 char limit
+      const MAX = 4096;
+      if (text.length <= MAX) {
+        ctx.reply(text, { parse_mode: 'HTML' });
+      } else {
+        let chunk = '';
+        for (const line of lines) {
+          if (chunk.length + line.length + 1 > MAX) {
+            ctx.reply(chunk, { parse_mode: 'HTML' });
+            chunk = line;
+          } else {
+            chunk = chunk ? `${chunk}\n${line}` : line;
+          }
+        }
+        if (chunk) ctx.reply(chunk, { parse_mode: 'HTML' });
       }
     });
 
@@ -295,6 +352,16 @@ export class TelegramChannel implements Channel {
     this.bot.catch((err) => {
       logger.error({ err: err.message }, 'Telegram bot error');
     });
+
+    // Register commands in Telegram's menu (shows when user types /)
+    await this.bot.api.setMyCommands([
+      { command: 'ping', description: 'Check the bot is online' },
+      { command: 'status', description: 'Active agents, queue depth, uptime' },
+      { command: 'skills', description: 'List installed skills' },
+      { command: 'reset', description: 'Kill stalled agent and clear queue' },
+      { command: 'update', description: 'Pull latest code and restart' },
+      { command: 'chatid', description: 'Get this chat\'s registration ID' },
+    ]).catch((err) => logger.warn({ err }, 'setMyCommands failed (non-fatal)'));
 
     return new Promise<void>((resolve) => {
       this.bot!.start({
