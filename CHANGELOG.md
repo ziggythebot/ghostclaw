@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.6.3 (2026-03-19) — Session + status fixes
+
+### Fixes
+- **`/reset` now clears the Claude session** — previously it killed the agent and queue but left the session ID intact, so the next message resumed the same bloated context window. Now `/reset` wipes the session entirely, next message starts fresh.
+- **`/status` waiting count fixed** — "Waiting groups" was showing 0 even when messages were queued behind a running agent. Now correctly counts any group with pending work.
+- **`AGENT_IDLE_TIMEOUT` and `AGENT_ABSOLUTE_TIMEOUT` can now be set in `.env`** — previously required editing the launchd plist or systemd service.
+
 ## v0.6.2 (2026-03-19) — /update hotfix
 
 ### Fixes
