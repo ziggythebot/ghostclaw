@@ -118,7 +118,7 @@ describe('container-runner timeout behavior', () => {
     vi.useRealTimers();
   });
 
-  it('absolute timeout after output resolves as success', async () => {
+  it('absolute timeout after output resolves as error', async () => {
     const onOutput = vi.fn(async () => {});
     const resultPromise = runContainerAgent(
       testGroup,
@@ -146,8 +146,9 @@ describe('container-runner timeout behavior', () => {
     await vi.advanceTimersByTimeAsync(10);
 
     const result = await resultPromise;
-    expect(result.status).toBe('success');
-    expect(result.newSessionId).toBe('session-123');
+    // Timeout always resolves as error — index.ts outputSentToUser guard prevents cursor rollback
+    expect(result.status).toBe('error');
+    expect(result.error).toContain('timed out');
     expect(onOutput).toHaveBeenCalledWith(
       expect.objectContaining({ result: 'Here is my response' }),
     );

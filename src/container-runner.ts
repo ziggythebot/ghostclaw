@@ -361,13 +361,13 @@ export async function runContainerAgent(
     let timeoutReason: 'idle' | 'absolute' | null = null;
     let hadStreamingOutput = false;
     const configTimeout = group.containerConfig?.timeout || CONTAINER_TIMEOUT;
-    const idleTimeoutMs = Math.min(
-      AGENT_IDLE_TIMEOUT,
-      Math.max(configTimeout, AGENT_ABSOLUTE_TIMEOUT),
-    );
-    const absoluteTimeoutMs = Math.max(configTimeout, AGENT_ABSOLUTE_TIMEOUT);
+    const absoluteTimeoutMs = Math.min(configTimeout, AGENT_ABSOLUTE_TIMEOUT);
+    const idleTimeoutMs = Math.min(AGENT_IDLE_TIMEOUT, absoluteTimeoutMs);
 
+    let timeoutHandled = false;
     const killOnTimeout = (reason: 'idle' | 'absolute') => {
+      if (timeoutHandled) return;
+      timeoutHandled = true;
       timedOut = true;
       timeoutReason = reason;
       logger.error(
@@ -377,8 +377,15 @@ export async function runContainerAgent(
           : 'Agent absolute timeout — hard ceiling reached, killing process',
       );
       agentProcess.kill('SIGTERM');
+      agentProcess.once('close', () => {
+        // Process already dead, nothing more to do
+      });
       setTimeout(() => {
-        if (!agentProcess.killed) agentProcess.kill('SIGKILL');
+        try {
+          agentProcess.kill('SIGKILL');
+        } catch {
+          // already dead
+        }
       }, 15000);
     };
 
@@ -423,30 +430,25 @@ export async function runContainerAgent(
             ? `idle timeout (${idleTimeoutMs}ms no stdout)`
             : `absolute timeout (${absoluteTimeoutMs}ms ceiling)`;
 
-        if (hadStreamingOutput) {
-          logger.info(
-            { group: group.name, processName, duration, code, timeoutReason },
-            `Agent timed out after output (${timeoutLabel})`,
-          );
-          outputChain.then(() => {
-            resolve({
-              status: 'success',
-              result: null,
-              newSessionId,
-            });
-          });
-          return;
-        }
-
         logger.error(
-          { group: group.name, processName, duration, code, timeoutReason },
-          `Agent timed out with no output (${timeoutLabel})`,
+          {
+            group: group.name,
+            processName,
+            duration,
+            code,
+            timeoutReason,
+            hadStreamingOutput,
+          },
+          `Agent timed out (${timeoutLabel})`,
         );
 
-        resolve({
-          status: 'error',
-          result: null,
-          error: `Agent timed out after ${timeoutMs}ms (${timeoutLabel})`,
+        outputChain.then(() => {
+          resolve({
+            status: 'error',
+            result: null,
+            error: `Agent timed out after ${timeoutMs}ms (${timeoutLabel})`,
+            newSessionId,
+          });
         });
         return;
       }
