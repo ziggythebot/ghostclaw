@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.6.5 (2026-03-20) — Reset actually resets
+
+### Fixes
+- **`/reset` now deletes the session directory on disk** — previously it only removed the session ID from the database. The Claude SDK reloads `.claude.json` when no session ID is passed, so old conversation context (including weeks-old project messages) was being silently restored. Now `/reset` removes `data/sessions/{group}/.claude/` entirely — next message starts with a genuinely blank slate.
+- **Completed tasks pruned on startup** — Ralph iterations and one-shot tasks marked `completed` now get deleted after 7 days. Prevents unbounded accumulation that was loading stale task history into agent context.
+
 ## v0.6.4 (2026-03-20) — Timeout fix + queue visibility
 
 ### Fixes
