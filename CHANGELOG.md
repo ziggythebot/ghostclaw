@@ -1,10 +1,14 @@
 # Changelog
 
-## v0.6.5 (2026-03-20) — Reset actually resets
+## v0.6.5 (2026-03-20) — Context bloat eliminated
 
 ### Fixes
 - **`/reset` now deletes the session directory on disk** — previously it only removed the session ID from the database. The Claude SDK reloads `.claude.json` when no session ID is passed, so old conversation context (including weeks-old project messages) was being silently restored. Now `/reset` removes `data/sessions/{group}/.claude/` entirely — next message starts with a genuinely blank slate.
-- **Completed tasks pruned on startup** — Ralph iterations and one-shot tasks marked `completed` now get deleted after 7 days. Prevents unbounded accumulation that was loading stale task history into agent context.
+
+### New
+- **Completed tasks archived to markdown, not kept in DB** — Ralph iterations and one-shot tasks are now written to `groups/{folder}/completed-tasks.md` on completion and immediately deleted from the database. Active task context only shows what actually needs attention (Due soon / Scheduled / Paused). No more stale task history injected into every agent run.
+- **`list_tasks` reorganised** — output now groups tasks into Due soon, Scheduled, and Paused sections with human-readable timestamps instead of a flat noisy list.
+- **`list_completed_tasks` tool** — new MCP tool lets the agent check `completed-tasks.md` when it needs to know what's already been done, without that history being forced into every context window.
 
 ## v0.6.4 (2026-03-20) — Timeout fix + queue visibility
 
