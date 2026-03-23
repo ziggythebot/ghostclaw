@@ -59,6 +59,8 @@ let lastTimestamp = '';
 let sessions: Record<string, string> = {};
 let registeredGroups: Record<string, RegisteredGroup> = {};
 let lastAgentTimestamp: Record<string, string> = {};
+const consecutiveFailures: Record<string, number> = {};
+const MAX_CURSOR_ROLLBACKS = 3;
 let messageLoopRunning = false;
 const startTime = Date.now();
 const currentTasks: Record<string, string> = {};
@@ -252,17 +254,33 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
         { group: group.name },
         'Agent error after output was sent, skipping cursor rollback to prevent duplicates',
       );
+      consecutiveFailures[chatJid] = 0;
+      return true;
+    }
+    consecutiveFailures[chatJid] = (consecutiveFailures[chatJid] || 0) + 1;
+    if (consecutiveFailures[chatJid] >= MAX_CURSOR_ROLLBACKS) {
+      logger.error(
+        { group: group.name, failures: consecutiveFailures[chatJid] },
+        'Too many consecutive failures — advancing cursor to prevent retry spiral. Some messages may be lost.',
+      );
+      consecutiveFailures[chatJid] = 0;
+      // Cursor already advanced (line above previousCursor), don't roll back
+      await channel.sendMessage(
+        chatJid,
+        '⚠️ I had trouble processing some messages and had to skip them. Please resend anything important.',
+      );
       return true;
     }
     lastAgentTimestamp[chatJid] = previousCursor;
     saveState();
     logger.warn(
-      { group: group.name },
+      { group: group.name, failure: consecutiveFailures[chatJid] },
       'Agent error, rolled back message cursor for retry',
     );
     return false;
   }
 
+  consecutiveFailures[chatJid] = 0;
   return true;
 }
 

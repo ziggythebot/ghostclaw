@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.6.6 (2026-03-23) — Fix retry spiral that caused multi-day hangs
+
+### Fixes
+- **Cursor rollback now has a limit** — previously, when an agent timed out without producing output, the message cursor rolled back unconditionally so the same messages would be retried. If the prompt itself was the problem (too large, API hang), this created an infinite loop: timeout -> rollback -> retry same messages -> timeout. After a week unattended, GhostClaw was stuck in this cycle with 17 queued messages, each retry burning 10 minutes before timing out.
+- **After 3 consecutive failures on the same cursor position**, the cursor now advances past the stuck messages instead of rolling back, and the bot sends the user a message: "I had trouble processing some messages and had to skip them. Please resend anything important." This breaks the spiral while keeping the user informed — no silent data loss.
+- The retry count in `group-queue.ts` (MAX_RETRIES=5) was not sufficient protection because every new incoming message triggered `recoverPendingMessages`, which restarted the retry cycle from scratch on the same backlog.
+
 ## v0.6.5 (2026-03-20) — Context bloat eliminated
 
 ### Fixes
