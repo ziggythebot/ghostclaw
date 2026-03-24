@@ -152,6 +152,7 @@ These work in any registered Telegram chat:
 | `/reset` | Force-kills a stalled agent and wipes the session. Next message starts with a blank slate. |
 | `/status` | Shows active agents, queue depth per group, and uptime. |
 | `/skills` | Lists all installed skills with descriptions. |
+| `/model` | View or switch AI model (sonnet, opus, haiku). |
 | `/update` | Pulls latest code, rebuilds, and restarts — no SSH needed. |
 | `/ping` | Check if the bot is online. |
 | `/chatid` | Show the chat's registration ID. |

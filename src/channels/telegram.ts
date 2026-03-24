@@ -104,6 +104,71 @@ export class TelegramChannel implements Channel {
       }
     });
 
+    const AVAILABLE_MODELS = [
+      { alias: 'sonnet', desc: 'Fast + capable (default)' },
+      { alias: 'opus', desc: 'Most capable, slower' },
+      { alias: 'haiku', desc: 'Fastest, cheapest' },
+    ];
+
+    this.bot.command('model', async (ctx) => {
+      const chatJid = `tg:${ctx.chat.id}`;
+      const group = this.opts.registeredGroups()[chatJid];
+      if (!group) {
+        ctx.reply('Not a registered chat.');
+        return;
+      }
+
+      const arg = ctx.match?.trim().toLowerCase();
+      const current = process.env.GHOSTCLAW_MODEL || 'sonnet';
+
+      if (!arg) {
+        const lines = AVAILABLE_MODELS.map((m) => {
+          const active = m.alias === current ? ' ← current' : '';
+          return `• <code>/model ${m.alias}</code> — ${m.desc}${active}`;
+        });
+        await ctx.reply(
+          `<b>Model: ${escapeXml(current)}</b>\n\n${lines.join('\n')}`,
+          { parse_mode: 'HTML' },
+        );
+        return;
+      }
+
+      const match = AVAILABLE_MODELS.find((m) => m.alias === arg);
+      if (!match) {
+        await ctx.reply(
+          `Unknown model "${escapeXml(arg)}". Use: ${AVAILABLE_MODELS.map((m) => m.alias).join(', ')}`,
+        );
+        return;
+      }
+
+      process.env.GHOSTCLAW_MODEL = match.alias;
+
+      // Persist to .env so it survives restarts
+      const envPath = path.join(process.cwd(), '.env');
+      try {
+        let envContent = fs.existsSync(envPath)
+          ? fs.readFileSync(envPath, 'utf-8')
+          : '';
+        if (envContent.match(/^GHOSTCLAW_MODEL=.*/m)) {
+          envContent = envContent.replace(
+            /^GHOSTCLAW_MODEL=.*/m,
+            `GHOSTCLAW_MODEL=${match.alias}`,
+          );
+        } else {
+          envContent =
+            envContent.trimEnd() + `\nGHOSTCLAW_MODEL=${match.alias}\n`;
+        }
+        fs.writeFileSync(envPath, envContent);
+      } catch (err) {
+        logger.warn({ err }, 'Failed to persist model to .env');
+      }
+
+      await ctx.reply(
+        `Model switched to <b>${escapeXml(match.alias)}</b>. Next message will use it.`,
+        { parse_mode: 'HTML' },
+      );
+    });
+
     // Command to show active agents, queue depth, and uptime
     this.bot.command('status', (ctx) => {
       const chatJid = `tg:${ctx.chat.id}`;
@@ -373,6 +438,7 @@ export class TelegramChannel implements Channel {
         },
         { command: 'skills', description: 'List installed skills' },
         { command: 'reset', description: 'Kill stalled agent and clear queue' },
+        { command: 'model', description: 'View or switch AI model' },
         { command: 'update', description: 'Pull latest code and restart' },
         { command: 'chatid', description: "Get this chat's registration ID" },
       ])

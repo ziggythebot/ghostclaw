@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.6.7 (2026-03-24) — Model selection + fast-fail on auth errors
+
+### New
+- **`/model` command in Telegram** — view and switch AI models without SSH or editing config files. Type `/model` to see current model and options, `/model opus` to switch. Persists to `.env` and takes effect on the next message — no restart needed. Available models: `sonnet` (default), `opus`, `haiku`.
+
+### Fixes
+- **Agent exits immediately on zero-result queries** — when the Claude API returned a 403 (e.g. expired OAuth token), the agent process would sit idle for 10 minutes waiting for IPC messages that would never arrive, then get killed by the idle timeout. Now detects the empty response and exits with an error immediately, so the retry happens in seconds.
+- **Default model changed from Haiku to Sonnet** — the SDK was defaulting to Haiku when no model was specified. Now defaults to `sonnet`. Override with `GHOSTCLAW_MODEL` in `.env` or `/model` in Telegram.
+- **Model config uses aliases** (`sonnet`, `opus`, `haiku`) instead of full dated model IDs, which avoids breakage when Anthropic rotates model versions.
+
 ## v0.6.6 (2026-03-23) — Fix retry spiral that caused multi-day hangs
 
 ### Fixes
