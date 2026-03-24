@@ -406,7 +406,7 @@ async function runQuery(
   containerInput: ContainerInput,
   sdkEnv: Record<string, string | undefined>,
   resumeAt?: string,
-): Promise<{ newSessionId?: string; lastAssistantUuid?: string; closedDuringQuery: boolean }> {
+): Promise<{ newSessionId?: string; lastAssistantUuid?: string; closedDuringQuery: boolean; resultCount: number }> {
   const stream = new MessageStream();
   stream.push(prompt);
 
@@ -494,7 +494,7 @@ async function runQuery(
     prompt: stream,
     options: {
       cwd,
-      model: process.env.GHOSTCLAW_MODEL || undefined,
+      model: process.env.GHOSTCLAW_MODEL || 'claude-sonnet-4-6-20250514',
       additionalDirectories: extraDirs.length > 0 ? extraDirs : undefined,
       resume: sessionId,
       resumeSessionAt: resumeAt,
@@ -545,7 +545,7 @@ async function runQuery(
 
   ipcPolling = false;
   log(`Query done. Messages: ${messageCount}, results: ${resultCount}, lastAssistantUuid: ${lastAssistantUuid || 'none'}, closedDuringQuery: ${closedDuringQuery}`);
-  return { newSessionId, lastAssistantUuid, closedDuringQuery };
+  return { newSessionId, lastAssistantUuid, closedDuringQuery, resultCount };
 }
 
 async function main(): Promise<void> {
@@ -603,6 +603,20 @@ async function main(): Promise<void> {
       }
       if (queryResult.lastAssistantUuid) {
         resumeAt = queryResult.lastAssistantUuid;
+      }
+
+      // If the query returned without producing any results (e.g. 403 auth
+      // error on first API call), exit with error instead of waiting for
+      // IPC messages that will never arrive.
+      if (queryResult.resultCount === 0 && !queryResult.closedDuringQuery) {
+        log('Query returned zero results — likely an auth or API error. Exiting with error.');
+        writeOutput({
+          status: 'error',
+          result: null,
+          newSessionId: sessionId,
+          error: 'Agent query returned no results (possible auth/API error)',
+        });
+        process.exit(1);
       }
 
       // If _close was consumed during the query, exit immediately.
