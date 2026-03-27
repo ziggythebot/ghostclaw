@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.6.8 (2026-03-27) — Clean session lifecycle
+
+### Fixes
+- **Sessions now exit cleanly after 2 minutes of inactivity** — previously the agent held its session open for 30 minutes after responding, then got killed by the 10-minute idle timeout. This caused noisy error logs on every single response and wasted resources. Now the host sends a `_close` signal after 2 minutes of no follow-up messages, and the agent exits gracefully. If a follow-up arrives within 2 minutes, it's handled in the same session with full context.
+- The 10-minute idle timeout in the container-runner remains as a safety net for truly stuck agents, but should no longer fire during normal operation.
+
 ## v0.6.7 (2026-03-24) — Model selection + fast-fail on auth errors
 
 ### New
