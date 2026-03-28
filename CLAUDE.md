@@ -4,7 +4,7 @@ Personal AI assistant. Originally forked from [NanoClaw](https://github.com/qwib
 
 ## Quick Context
 
-Single Node.js process that connects to Telegram and WhatsApp, routes messages to Claude Agent SDK running as **direct Node.js child processes** (no containers). Each group has isolated filesystem and memory.
+Single Node.js process that connects to Telegram, routes messages to Claude Agent SDK running as **direct Node.js child processes** (no containers). Each group has isolated filesystem and memory.
 
 Agents run directly on the host machine. `container-runner.ts` spawns `node` processes, passing paths via environment variables (`GHOSTCLAW_GROUP_DIR`, `GHOSTCLAW_IPC_DIR`, `GHOSTCLAW_GLOBAL_DIR`).
 
@@ -51,7 +51,7 @@ Agents run directly on the host machine. `container-runner.ts` spawns `node` pro
 
 ## Community
 
-[OpenClawOS Telegram group](https://t.me/+8qJbqxzBQAZkYTNk) — for problems, suggestions, and sharing.
+[GhostClaw community on Telegram](https://t.me/+8qJbqxzBQAZkYTNk) — for problems, suggestions, and sharing.
 
 ## Dashboard (Mission Control)
 
