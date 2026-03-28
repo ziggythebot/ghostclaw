@@ -1,22 +1,24 @@
 # Contributing
 
-## Source Code Changes
+## Skills (preferred)
 
-**Accepted:** Bug fixes, security fixes, simplifications, reducing code.
+Most new capabilities should be **skills** — markdown files in `.claude/skills/` that teach Claude how to add a feature. No source code changes needed.
 
-**Not accepted:** Features, capabilities, compatibility, enhancements. These should be skills.
+See the [skills repo](https://github.com/b1rdmania/ghostclaw-skills) for examples. PR a new skill there, or add one directly to this repo.
 
-## Skills
+Your skill should contain **instructions** Claude follows — not pre-built code. See `/add-telegram` for a good example. All skills are security-scanned before installation.
 
-A [skill](https://code.claude.com/docs/en/skills) is a markdown file in `.claude/skills/` that teaches Claude Code how to transform a GhostClaw installation.
+## Source code
 
-A PR that contributes a skill should not modify any source files.
+**Welcome:** Bug fixes, security fixes, simplifications, performance improvements, reducing code.
 
-Your skill should contain the **instructions** Claude follows to add the feature — not pre-built code. See `/add-telegram` for a good example.
+**Discuss first:** New features or architectural changes. Open an issue before writing code — GhostClaw is intentionally lean (~4K LOC) and we want to keep it that way. If it can be a skill, it should be a skill.
 
-### Testing
+## Before submitting
 
-Test your skill by running it on a fresh clone before submitting. All skills are security-scanned before installation.
+- Code compiles: `npm run build`
+- Tests pass: `npm run test`
+- Follows existing conventions
 
 ## Community
 
