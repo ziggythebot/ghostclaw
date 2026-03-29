@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.7.0 (2026-03-29) — Message history overflow fix
+
+### Fixes
+- **Message history queries now have LIMIT** — `getNewMessages()` and `getMessagesSince()` were loading unbounded results from SQLite. As conversations grew, this caused escalating memory usage and token costs. Both queries now cap at 200 rows (configurable), using a DESC subquery to keep the most recent messages.
+- **Per-prompt message cap** — `MAX_MESSAGES_PER_PROMPT` (default 50, configurable via env var) limits how many messages are bundled into a single agent prompt.
+- **Cursor recovery on restart** — when `lastAgentTimestamp` is missing (new group, corrupted state, or restart), the system now recovers from the last bot message timestamp instead of falling back to empty string (which would send the entire conversation history).
+
 ## v0.6.9 (2026-03-29) — Structured memory + process watchdog
 
 ### New
