@@ -1,5 +1,9 @@
 import fs from 'fs';
 import path from 'path';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const { version: APP_VERSION } = require('../package.json');
 
 import {
   ASSISTANT_NAME,
@@ -375,6 +379,17 @@ async function startMessageLoop(): Promise<void> {
   messageLoopRunning = true;
 
   logger.info(`GhostClaw running (trigger: @${ASSISTANT_NAME})`);
+
+  // Send startup notification to main group
+  const mainJid = Object.entries(registeredGroups).find(
+    ([, g]) => g.folder === MAIN_GROUP_FOLDER,
+  )?.[0];
+  if (mainJid) {
+    const mainChannel = findChannel(channels, mainJid);
+    mainChannel
+      ?.sendMessage(mainJid, `Back online. v${APP_VERSION}`)
+      .catch(() => {});
+  }
 
   while (true) {
     try {
