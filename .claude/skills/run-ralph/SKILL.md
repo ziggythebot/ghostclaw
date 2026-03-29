@@ -39,11 +39,36 @@ Rules for good task files:
 sqlite3 store/messages.db "SELECT jid FROM registered_groups WHERE folder = 'main' LIMIT 1;"
 ```
 
-### 3. Set iterations
+### 3. Estimate iterations
 
-Count the unchecked tasks in the task file. Set `maxIterations` to that count + 2 (buffer for retries). If unsure, ask the user: "You have N tasks — run all of them, or set a limit?"
+Read the task file and assess each unchecked task:
 
-Default is 10 if not specified. Can also be set via `RALPH_MAX_ITERATIONS` in `.env`.
+**Simple tasks** (1 iteration each):
+- Config changes, env vars, small edits
+- Adding a single file or endpoint
+- Running a command and reporting results
+
+**Medium tasks** (2 iterations each):
+- New feature with tests
+- Integration with an external service
+- Refactoring across multiple files
+
+**Complex tasks** (3 iterations each):
+- Multi-file architectural changes
+- New system with several moving parts
+- Anything with "and also" or multiple acceptance criteria
+
+Add up the estimates and add 2 for retry buffer. Tell the user:
+
+> "You have N tasks. I'd estimate M iterations based on complexity:
+> - 3 simple (3 iterations)
+> - 2 medium (4 iterations)
+> - 1 complex (3 iterations)
+> - Total: 12 iterations (10 + 2 buffer)
+>
+> Want me to run with that, or set a different limit?"
+
+If the user just says "go" or "run it", use your estimate. Don't block on confirmation for small runs (under 10 iterations).
 
 ### 4. Start the run
 
