@@ -22,19 +22,51 @@ Check if `groups/main/HEARTBEAT.md` exists. If not, create it with this template
 ```markdown
 # Heartbeat Checks
 
-Run these checks periodically. Only message the user if something needs attention.
+Run these checks silently. Only message the user if something actually needs their attention.
 
 ## Checks
 
-- [ ] **GhostClaw errors**: `tail -20 ~/nanoclaw/logs/ghostclaw.error.log` — alert if non-empty in the last hour
-- [ ] **Disk space**: `df -h /` — alert if usage >80%
+### 1. Error Log
+
+\`\`\`bash
+tail -20 ~/nanoclaw/logs/errors.log
+\`\`\`
+
+- Each line is JSON with a `"time"` field (Unix ms).
+- Calculate cutoff: `Date.now() - (35 * 60 * 1000)`.
+- **Ignore** any entry where `time < cutoff`. Don't mention ignored entries at all.
+- If the file is empty or all entries are old, this check passes silently.
+- If recent errors exist, summarise the actual problem in one line.
+
+### 2. Runaway Processes
+
+\`\`\`bash
+ps aux -r | head -5
+\`\`\`
+
+- Check if any process is using >90% CPU.
+- Chrome/agent-browser processes that have been running for hours are zombies — kill them:
+  \`\`\`bash
+  pkill -9 -f "agent-browser-chrome"
+  \`\`\`
+- Alert the user: "Killed zombie Chrome process (was using X% CPU)."
+- Also check load average (`uptime`). If load >4, mention it.
+
+### 3. Disk Space
+
+\`\`\`bash
+df -h /
+\`\`\`
+
+- Alert if usage >80%. State the percentage and partition.
 
 ## Rules
 
-- Run checks in order. If something needs attention, message the user about it.
-- If everything is fine, do nothing. No "all clear" messages. Respond with `<internal>All checks passed</internal>` only.
-- Keep messages short. State the problem, not the diagnosis.
-- Don't repeat alerts you've already sent (check conversation history first).
+- **Silent by default.** If everything is fine: `<internal>All checks passed</internal>` — nothing else.
+- **Never explain your reasoning.** Just do the checks and report problems.
+- **Never report old/filtered entries.** If an entry is too old, pretend it doesn't exist.
+- When alerting, state the problem in plain English, one or two lines max.
+- Don't repeat alerts already visible in recent conversation history.
 ```
 
 ### 2. Ask the user

@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.6.9 (2026-03-29) — Structured memory + process watchdog
+
+### New
+- **Structured memory system** — replaces the monolith CLAUDE.md with three files: `memory/identity.md` (who the agent is — read once per session), `memory/state.md` (active projects, current status — read every message), and `memory/log.md` (append-only decisions and completed work). CLAUDE.md becomes pure instructions. New installs get this from `/setup-ghostclaw`. Existing installs can migrate with `/migrate-memory`.
+- **Runaway process watchdog** — heartbeat now checks for zombie processes (Chrome/agent-browser) consuming >90% CPU and kills them automatically. Also monitors load average and alerts if >4. Prevents the machine from cooking for days unattended.
+- **Remote debug via Telegram** — text "check load", "check memory", "what's eating CPU", or "kill chrome" and the agent runs the commands and reports back.
+
 ## v0.6.8 (2026-03-27) — Clean session lifecycle
 
 ### Fixes
