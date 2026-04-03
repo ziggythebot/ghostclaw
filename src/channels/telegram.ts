@@ -478,6 +478,10 @@ export class TelegramChannel implements Channel {
         },
         { command: 'skills', description: 'List installed skills' },
         { command: 'reset', description: 'Kill stalled agent and clear queue' },
+        {
+          command: 'hardreset',
+          description: 'Nuclear reset — kill all, wipe sessions, restart',
+        },
         { command: 'model', description: 'View or switch AI model' },
         { command: 'update', description: 'Pull latest code and restart' },
         { command: 'chatid', description: "Get this chat's registration ID" },

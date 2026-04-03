@@ -881,6 +881,7 @@ async function main(): Promise<void> {
       return `Hard reset complete:\n${report.map((r) => `• ${r}`).join('\n')}`;
     },
     onGetStatus: () => {
+      const { execSync } = require('child_process');
       const status = queue.getStatus();
       const uptimeMs = Date.now() - startTime;
       const uptimeMin = Math.floor(uptimeMs / 60000);
@@ -889,23 +890,139 @@ async function main(): Promise<void> {
         uptimeHr > 0 ? `${uptimeHr}h ${uptimeMin % 60}m` : `${uptimeMin}m`;
 
       const lines = [
-        `<b>GhostClaw status</b>`,
+        `<b>GhostClaw v${require('../package.json').version}</b>`,
         `Uptime: ${uptime}`,
-        `Active agents: ${status.active}`,
-        `Waiting groups: ${status.waiting}`,
+        '',
+        `<b>Agents</b>`,
+        `Active: ${status.active} | Queued: ${status.waiting}`,
       ];
 
       if (status.groups.length > 0) {
-        lines.push('');
         for (const g of status.groups) {
           const group = registeredGroups[g.jid];
           const name = escapeXml(group?.name || g.jid);
           const parts: string[] = [];
           if (g.active) parts.push('running');
-          if (g.queuedTasks > 0) parts.push(`${g.queuedTasks} task(s) queued`);
-          if (g.queuedMessages) parts.push('messages queued');
+          if (g.queuedTasks > 0) parts.push(`${g.queuedTasks} queued`);
+          if (g.queuedMessages) parts.push('msgs waiting');
           lines.push(`• ${name}: ${parts.join(', ')}`);
         }
+      }
+
+      // Scheduled tasks
+      try {
+        const tasks = getAllTasks();
+        if (tasks.length > 0) {
+          lines.push('', `<b>Tasks</b>: ${tasks.length} scheduled`);
+          const ralphTasks = tasks.filter(
+            (t) => t.id.includes('ralph') || t.prompt.includes('RALPH'),
+          );
+          if (ralphTasks.length > 0) {
+            lines.push(`Ralph tasks: ${ralphTasks.length}`);
+          }
+        }
+      } catch {
+        /* ignore */
+      }
+
+      // Processes
+      try {
+        const procs = execSync(
+          "ps aux | grep -E 'claude|agent-runner' | grep -v grep | wc -l",
+          { encoding: 'utf-8' },
+        ).trim();
+        const count = parseInt(procs, 10) || 0;
+        lines.push('', `<b>Processes</b>`);
+        lines.push(`Claude/agent processes: ${count}`);
+      } catch {
+        /* ignore */
+      }
+
+      // Memory
+      try {
+        const vmStat = execSync('vm_stat', { encoding: 'utf-8' });
+        const pageSize = 16384;
+        const freeMatch = vmStat.match(/Pages free:\s+(\d+)/);
+        const activeMatch = vmStat.match(/Pages active:\s+(\d+)/);
+        const inactiveMatch = vmStat.match(/Pages inactive:\s+(\d+)/);
+        const wiredMatch = vmStat.match(/Pages wired down:\s+(\d+)/);
+        if (freeMatch && activeMatch && wiredMatch) {
+          const usedGB =
+            ((parseInt(activeMatch[1], 10) + parseInt(wiredMatch[1], 10)) *
+              pageSize) /
+            1024 /
+            1024 /
+            1024;
+          const totalGB = 16;
+          const pct = Math.round((usedGB / totalGB) * 100);
+          lines.push('', `<b>Memory</b>`);
+          lines.push(
+            `${usedGB.toFixed(1)}GB / ${totalGB}GB (${pct}%)${pct > 85 ? ' ⚠️' : ''}`,
+          );
+        }
+      } catch {
+        /* ignore */
+      }
+
+      // Session size
+      try {
+        const sessSize = execSync(
+          `du -sh ${path.join(DATA_DIR, 'sessions')} 2>/dev/null | cut -f1`,
+          { encoding: 'utf-8' },
+        ).trim();
+        lines.push('', `<b>Sessions</b>`);
+        lines.push(`Size: ${sessSize}`);
+      } catch {
+        /* ignore */
+      }
+
+      // Today's errors — categorised
+      try {
+        const logFile = path.join(process.cwd(), 'logs', 'ghostclaw.log');
+        if (fs.existsSync(logFile)) {
+          const today = new Date().toISOString().slice(0, 10);
+          const errorLines = execSync(
+            `grep "ERROR" "${logFile}" 2>/dev/null || true`,
+            { encoding: 'utf-8', maxBuffer: 5 * 1024 * 1024 },
+          )
+            .split('\n')
+            .filter((l: string) => l.includes(today));
+
+          const categories: Record<string, number> = {};
+          for (const line of errorLines) {
+            const clean = line.replace(/\x1b\[[0-9;]*m/g, '');
+            if (/idle timeout/i.test(clean)) {
+              categories['Idle timeouts'] =
+                (categories['Idle timeouts'] || 0) + 1;
+            } else if (/absolute timeout/i.test(clean)) {
+              categories['Absolute timeouts'] =
+                (categories['Absolute timeouts'] || 0) + 1;
+            } else if (/rate.limit|429/i.test(clean)) {
+              categories['Rate limits'] = (categories['Rate limits'] || 0) + 1;
+            } else if (/exit.*code|exited/i.test(clean)) {
+              categories['Agent crashes'] =
+                (categories['Agent crashes'] || 0) + 1;
+            } else if (/cursor|retry spiral/i.test(clean)) {
+              categories['Retry spirals'] =
+                (categories['Retry spirals'] || 0) + 1;
+            } else {
+              categories['Other'] = (categories['Other'] || 0) + 1;
+            }
+          }
+
+          lines.push('', `<b>Errors today</b>`);
+          const total = errorLines.length;
+          if (total === 0) {
+            lines.push('None ✓');
+          } else {
+            lines.push(`Total: ${total}`);
+            for (const [cat, count] of Object.entries(categories)) {
+              lines.push(`• ${cat}: ${count}`);
+            }
+          }
+        }
+      } catch {
+        /* ignore */
       }
 
       return lines.join('\n');
