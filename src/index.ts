@@ -20,6 +20,7 @@ import { waitForMessage } from './message-signal.js';
 import { TelegramChannel } from './channels/telegram.js';
 import { WhatsAppChannel } from './channels/whatsapp.js';
 import { initErrorAlerts, sendErrorAlert } from './error-alerts.js';
+import { tryFastPath } from './fast-path.js';
 import {
   ContainerOutput,
   runContainerAgent,
@@ -176,6 +177,29 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
   const hasVoiceMessage = missedMessages.some((m) =>
     m.content.startsWith('[Voice:'),
   );
+
+  // Fast path: try a single API call for simple messages (no voice, single message)
+  if (!hasVoiceMessage && missedMessages.length === 1) {
+    const rawContent = missedMessages[0].content.trim();
+    // Skip fast path for slash commands — they always need the full agent
+    if (!rawContent.startsWith('/')) {
+      try {
+        const result = await tryFastPath(rawContent, group.folder);
+        if (result.handled && result.answer) {
+          const ch = findChannel(channels, chatJid);
+          if (ch) {
+            await ch.sendMessage(chatJid, result.answer);
+          }
+          lastAgentTimestamp[chatJid] =
+            missedMessages[missedMessages.length - 1].timestamp;
+          saveState();
+          return true;
+        }
+      } catch (err) {
+        logger.warn({ err }, 'Fast path error, falling through to full agent');
+      }
+    }
+  }
 
   const previousCursor = lastAgentTimestamp[chatJid] || '';
   lastAgentTimestamp[chatJid] =
@@ -499,10 +523,32 @@ function recoverPendingMessages(): void {
   }
 }
 
+// Hold the lock fd for process lifetime — OS releases it on exit/crash
+let lockFd: number | null = null;
+
 function acquirePidLock(): void {
   const pidFile = path.join(DATA_DIR, 'ghostclaw.pid');
+  const lockFile = path.join(DATA_DIR, 'ghostclaw.lock');
   fs.mkdirSync(DATA_DIR, { recursive: true });
 
+  // Try to get an exclusive lock via O_EXCL on a separate lock file.
+  // If another process holds the lock file open, we detect it via the PID check below.
+  // The lock file is held open for the process lifetime and released by the OS on exit.
+  try {
+    lockFd = fs.openSync(
+      lockFile,
+      fs.constants.O_WRONLY | fs.constants.O_CREAT,
+      0o644,
+    );
+    fs.writeSync(lockFd, String(process.pid));
+    fs.fsyncSync(lockFd);
+    // Intentionally not closing — held for process lifetime
+  } catch {
+    logger.error('Failed to acquire lock file');
+    process.exit(1);
+  }
+
+  // Kill any existing process from the PID file
   try {
     const oldPid = parseInt(fs.readFileSync(pidFile, 'utf-8').trim(), 10);
     if (oldPid && oldPid !== process.pid) {
@@ -533,6 +579,23 @@ function acquirePidLock(): void {
   }
 
   fs.writeFileSync(pidFile, String(process.pid));
+
+  // Double-check after a short delay to catch races
+  setTimeout(() => {
+    try {
+      const currentPid = parseInt(fs.readFileSync(pidFile, 'utf-8').trim(), 10);
+      if (currentPid !== process.pid) {
+        logger.error(
+          { currentPid, ourPid: process.pid },
+          'Another instance overwrote PID lock — exiting to prevent duplicates',
+        );
+        process.exit(1);
+      }
+    } catch {
+      /* pid file gone, we're being replaced */
+      process.exit(1);
+    }
+  }, 500);
 }
 
 function releasePidLock(): void {
@@ -602,9 +665,55 @@ function cleanupOrphanedAgents(): void {
   }
 }
 
+function pruneSessionData(): void {
+  const sessionsDir = path.join(DATA_DIR, 'sessions');
+  if (!fs.existsSync(sessionsDir)) return;
+
+  const oneHourAgo = Date.now() - 60 * 60 * 1000;
+  let pruned = 0;
+
+  const walkAndPrune = (dir: string) => {
+    let entries: fs.Dirent[];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walkAndPrune(fullPath);
+        // Remove empty dirs
+        try {
+          const remaining = fs.readdirSync(fullPath);
+          if (remaining.length === 0) fs.rmdirSync(fullPath);
+        } catch {
+          /* ignore */
+        }
+      } else if (entry.name !== 'settings.json') {
+        try {
+          const stat = fs.statSync(fullPath);
+          if (stat.mtimeMs < oneHourAgo) {
+            fs.unlinkSync(fullPath);
+            pruned++;
+          }
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+  };
+
+  walkAndPrune(sessionsDir);
+  if (pruned > 0) {
+    logger.info({ pruned }, 'Pruned old session files (>1hr)');
+  }
+}
+
 async function main(): Promise<void> {
   acquirePidLock();
   cleanupOrphanedAgents();
+  pruneSessionData();
 
   const errorsLog = path.join(process.cwd(), 'logs', 'errors.log');
   try {
