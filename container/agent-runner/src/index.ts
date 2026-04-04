@@ -366,8 +366,11 @@ function isSessionResumable(sessionId: string): boolean {
   if (!configDir || !sessionId) return true;
 
   // Claude Code stores sessions under projects/{sanitized_cwd}/{sessionId}.jsonl
+  // Sanitization: replace all slashes with dashes. The leading slash becomes a
+  // leading dash — do NOT strip it, that's how Claude Code names the directory.
+  // e.g. /Users/ziggy/nanoclaw/groups/main → -Users-ziggy-nanoclaw-groups-main
   const cwd = process.env.GHOSTCLAW_GROUP_DIR || process.cwd();
-  const sanitizedCwd = cwd.replace(/\//g, '-').replace(/^-/, '');
+  const sanitizedCwd = cwd.replace(/\//g, '-');
   const sessionFile = path.join(configDir, 'projects', sanitizedCwd, `${sessionId}.jsonl`);
 
   try {
@@ -593,6 +596,21 @@ async function runQuery(
   return { newSessionId, lastAssistantUuid, closedDuringQuery, resultCount };
 }
 
+const HEARTBEAT_MARKER = '---GHOSTCLAW_HEARTBEAT---';
+const HEARTBEAT_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
+
+/**
+ * Write a periodic heartbeat to stdout so the container-runner's idle timer
+ * resets during long-running operations (e.g. Task sub-agent waits) that
+ * produce no other stdout. The marker is not an output — container-runner
+ * resets the idle timer on any stdout data before checking for output markers.
+ */
+function startHeartbeat(): NodeJS.Timeout {
+  return setInterval(() => {
+    process.stdout.write(`${HEARTBEAT_MARKER}\n`);
+  }, HEARTBEAT_INTERVAL_MS);
+}
+
 async function main(): Promise<void> {
   let containerInput: ContainerInput;
 
@@ -643,6 +661,10 @@ async function main(): Promise<void> {
     log(`Draining ${pending.length} pending IPC messages into initial prompt`);
     prompt += '\n' + pending.join('\n');
   }
+
+  // Heartbeat: keeps the container-runner's idle timer alive during long-running
+  // operations (Task sub-agent waits, slow tool calls) that produce no stdout.
+  const heartbeat = startHeartbeat();
 
   // Query loop: run query → wait for IPC message → run new query → repeat
   let resumeAt: string | undefined;
@@ -705,6 +727,7 @@ async function main(): Promise<void> {
       prompt = nextMessage;
     }
   } catch (err) {
+    clearInterval(heartbeat);
     const errorMessage = err instanceof Error ? err.message : String(err);
     log(`Agent error: ${errorMessage}`);
     writeOutput({
@@ -715,6 +738,8 @@ async function main(): Promise<void> {
     });
     process.exit(1);
   }
+
+  clearInterval(heartbeat);
 }
 
 main();

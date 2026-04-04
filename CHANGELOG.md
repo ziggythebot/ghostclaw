@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.7.5 (2026-04-04) — Heartbeat + session validation path fix
+
+### Fixes
+- **Agent-runner heartbeat** — writes a keepalive marker to stdout every 2 minutes. The container-runner already resets the idle timer on any stdout data, so this prevents false stall timeouts during Task sub-agent waits (which produce no other stdout). The `task_notification` SDK event only fires on completion, not during execution — meaning the stderr-based idle reset in v0.7.4 was insufficient for long Task waits specifically.
+- **Session validation path bug fixed** — the leading slash in the CWD was being stripped when constructing the session file path, causing validation to always miss the file and silently do nothing. Claude Code keeps the leading dash (e.g. `-Users-ziggy-nanoclaw-groups-main`), and the path is now constructed correctly.
+
 ## v0.7.4 (2026-04-04) — Idle timeout architecture fix
 
 ### Fixes
