@@ -61,6 +61,12 @@ function readSecrets(): Record<string, string> {
  * Each MCP server added here becomes available to all agent instances.
  * Standard Claude Code settings.json format — agents/skills can also
  * add servers by editing the per-group settings.json directly.
+ *
+ * IMPORTANT: Every server added here MUST be gated behind an opt-in env flag
+ * (e.g. GMAIL_MCP_ENABLED=1). Never add a server that loads unconditionally —
+ * MCP servers spin up on every agent invocation and waste startup time/resources
+ * for tasks that don't need them. Per-group servers in settings.json are
+ * already opt-in by design and are the preferred way to add integrations.
  */
 function buildGlobalMcpServers(): Record<
   string,
