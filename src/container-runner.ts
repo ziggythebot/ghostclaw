@@ -365,6 +365,10 @@ export async function runContainerAgent(
 
     agentProcess.stderr.on('data', (data) => {
       const chunk = data.toString();
+      // Any stderr output means the agent is alive and working (tool calls,
+      // task notifications, internal logs). Reset idle timer so long-running
+      // sub-agent tasks don't trigger a false stall timeout.
+      resetIdleTimer();
       const lines = chunk.trim().split('\n');
       for (const line of lines) {
         if (line) logger.debug({ agent: group.folder }, line);
