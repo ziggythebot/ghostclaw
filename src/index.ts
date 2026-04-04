@@ -370,11 +370,39 @@ async function runAgent(
       }
     : undefined;
 
+  // Inject recent files context so agents don't duplicate work
+  let enrichedPrompt = prompt;
+  try {
+    const groupDir = path.join(GROUPS_DIR, group.folder);
+    const cutoff = Date.now() - 20 * 60 * 1000; // 20 minutes
+    const entries = fs.readdirSync(groupDir, { withFileTypes: true });
+    const recentFiles = entries
+      .filter((e) => e.isFile() && !e.name.startsWith('.'))
+      .map((e) => ({
+        name: e.name,
+        mtime: fs.statSync(path.join(groupDir, e.name)).mtimeMs,
+      }))
+      .filter((f) => f.mtime > cutoff)
+      .sort((a, b) => b.mtime - a.mtime)
+      .slice(0, 10);
+    if (recentFiles.length > 0) {
+      const listing = recentFiles
+        .map(
+          (f) =>
+            `  ${f.name} (${Math.round((Date.now() - f.mtime) / 60000)}m ago)`,
+        )
+        .join('\n');
+      enrichedPrompt += `\n\n<recent_files>\nFiles recently created/modified in your workspace:\n${listing}\nCheck these before creating new files on the same topic.\n</recent_files>`;
+    }
+  } catch {
+    /* ignore — non-critical */
+  }
+
   try {
     const output = await runContainerAgent(
       group,
       {
-        prompt,
+        prompt: enrichedPrompt,
         sessionId,
         groupFolder: group.folder,
         chatJid,
