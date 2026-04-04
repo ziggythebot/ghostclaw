@@ -15,10 +15,11 @@
 
 <p align="center">
   <a href="https://ghostclaw.io">Website</a> &nbsp;·&nbsp;
-  <a href="#why-ghostclaw">Why GhostClaw</a> &nbsp;·&nbsp;
+  <a href="https://ghostclaw.io/learn.md">Learn</a> &nbsp;·&nbsp;
   <a href="#get-started">Install</a> &nbsp;·&nbsp;
   <a href="https://ghostclaw.io/skills.html">Skills</a> &nbsp;·&nbsp;
-  <a href="https://github.com/b1rdmania/ghostclaw-skills">Skill Repo</a>
+  <a href="https://github.com/b1rdmania/ghostclaw-skills">Skill Repo</a> &nbsp;·&nbsp;
+  <a href="https://ghostclaw.io/security">Security</a>
 </p>
 
 ---
@@ -42,19 +43,36 @@ GhostClaw started as a NanoClaw fork with one question: what if you ripped out e
 
 ## Get started
 
-You need a [Claude](https://claude.ai) account (Max or API keys) and a computer to run it on. Best on a dedicated machine — a Mac Mini, an old laptop, a VPS.
+> **New to AI agents?** Read [learn.md](https://ghostclaw.io/learn.md) first — the full picture on personal agents in 2026, how GhostClaw compares to OpenClaw, Hermes, NanoClaw and others, and what you're getting into. Or drop it into Claude Code as a skill and ask it anything.
 
 ```bash
-npm install -g @anthropic-ai/claude-code
-git clone https://github.com/b1rdmania/ghostclaw.git
-cd ghostclaw && npm install
-claude
-# then type: /setup-ghostclaw
+curl -fsSL https://ghostclaw.io/install.sh | bash
 ```
 
-The setup skill walks you through everything — Telegram bot, API keys, personality, service management. About 10 minutes.
+One command. The installer walks you through everything — API key, Telegram bot, personality, auto-start. Done in 5 minutes.
 
-**Requirements:** Node.js 20+, macOS or Linux, Claude Max or API keys.
+**Requirements:** Node.js 20+, [Anthropic API key](https://console.anthropic.com/settings/keys), macOS or Linux, Telegram account.
+
+<details>
+<summary>Manual install</summary>
+
+```bash
+git clone https://github.com/b1rdmania/ghostclaw.git
+cd ghostclaw && npm install && npm run build
+```
+
+Create `.env`:
+```
+ANTHROPIC_API_KEY=sk-ant-your-key-here
+TELEGRAM_BOT_TOKEN=your-bot-token
+TELEGRAM_ONLY=true
+ASSISTANT_NAME=YourName
+```
+
+Start: `node dist/index.js`
+
+Or use Claude Code guided setup: `cd ghostclaw && claude` then type `/setup-ghostclaw`.
+</details>
 
 ## What's included
 
