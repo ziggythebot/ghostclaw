@@ -65,6 +65,16 @@ When working as a sub-agent or teammate, only use `send_message` if instructed t
 
 The `conversations/` folder contains searchable history of past conversations.
 
+### Before creating new files
+
+**CRITICAL — Before starting any research, writing, or creative task, search this directory for existing files on the same topic.** Use glob/grep to check for keywords. If you find an existing file:
+- **Build on it** rather than creating a new one
+- If the existing file is incomplete, extend it
+- If the user wants a fresh take, rename or archive the old one first
+- Never create a second file on the same topic without acknowledging the first
+
+This prevents duplicate research docs from accumulating when conversations span multiple sessions or agents.
+
 When you learn something important:
 - Create files for structured data (e.g., `customers.md`, `preferences.md`)
 - Split files larger than 500 lines into folders
