@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.7.6 (2026-04-06) — SDK auto-update + broken session recovery
+
+### New
+- **Weekly SDK auto-update** — a launchd job (`com.ghostclaw.sdk-update`) runs every Monday at 3am, updates `@anthropic-ai/claude-agent-sdk` to the latest version, rebuilds the agent-runner, and restarts GhostClaw only if the version changed. Keeps the SDK current so new models are always available. Logs to `logs/sdk-update.log`.
+
+### Fixes
+- **Broken session recovery** — when a session transcript is missing from disk (e.g. after a data directory wipe or path migration), the SDK returns `error_during_execution` immediately on resume. The orchestrator's retry spiral protection would advance the cursor but leave the broken session ID in the DB, causing every subsequent message to fail the same way. Fix: clear the session from the DB on first `error_during_execution` so the next message starts a fresh session. Previously required manual `DELETE FROM sessions` in the DB.
+- **SDK updated** — bumped `@anthropic-ai/claude-agent-sdk` from 0.2.34 → 0.2.92.
+
 ## v0.7.5 (2026-04-04) — Heartbeat + session validation path fix
 
 ### Fixes

@@ -438,6 +438,20 @@ async function runAgent(
         delete sessions[group.folder];
         deleteSession(group.folder);
       }
+      // If the SDK returned error_during_execution on session resume, the session
+      // transcript is missing or corrupt. Clear it so the next message starts fresh
+      // rather than retrying the same broken session ID indefinitely.
+      const isExecError =
+        output.error?.includes('error_during_execution') ||
+        output.error?.includes('exited with code 1');
+      if (isExecError && sessionId && sessions[group.folder] === sessionId) {
+        logger.warn(
+          { group: group.name, clearedSession: sessionId },
+          'Execution error on session resume — clearing broken session',
+        );
+        delete sessions[group.folder];
+        deleteSession(group.folder);
+      }
       logger.error(
         { group: group.name, error: output.error },
         'Container agent error',
