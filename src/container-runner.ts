@@ -43,11 +43,36 @@ export interface ContainerOutput {
 }
 
 /**
+ * Read the Claude Code OAuth access token from the macOS keychain.
+ * Claude Code refreshes this automatically; reading it here ensures we always
+ * use the current token even after the ~24h access token expiry.
+ * Returns undefined if not on macOS or keychain read fails.
+ */
+function readOAuthTokenFromKeychain(): string | undefined {
+  try {
+    const raw = execSync(
+      'security find-generic-password -s "Claude Code-credentials" -w',
+      { stdio: ['ignore', 'pipe', 'ignore'] },
+    )
+      .toString()
+      .trim();
+    const parsed = JSON.parse(raw);
+    const token = parsed?.claudeAiOauth?.accessToken;
+    if (typeof token === 'string' && token.length > 0) return token;
+  } catch {
+    // Not macOS, keychain locked, or entry missing — fall back to .env
+  }
+  return undefined;
+}
+
+/**
  * Read allowed secrets from .env for passing to the agent via stdin.
  * Secrets are never written to disk.
+ * The OAuth token is always pulled fresh from the macOS keychain so it
+ * stays current after the ~24h access token rotation.
  */
 function readSecrets(): Record<string, string> {
-  return readEnvFile([
+  const secrets = readEnvFile([
     'CLAUDE_CODE_OAUTH_TOKEN',
     'ANTHROPIC_API_KEY',
     'ANTHROPIC_BASE_URL',
@@ -55,6 +80,14 @@ function readSecrets(): Record<string, string> {
     'ELEVENLABS_API_KEY',
     'ELEVENLABS_VOICE_ID',
   ]);
+
+  // Prefer keychain token over .env — keychain is always current
+  const keychainToken = readOAuthTokenFromKeychain();
+  if (keychainToken) {
+    secrets.CLAUDE_CODE_OAUTH_TOKEN = keychainToken;
+  }
+
+  return secrets;
 }
 
 /**
